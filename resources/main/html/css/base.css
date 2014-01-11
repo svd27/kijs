@@ -1,0 +1,196 @@
+.primary-1 { background-color: #4013AF }
+.primary-2 { background-color: #452B83 }
+.primary-3 { background-color: #250672 }
+.primary-4 { background-color: #7147D7 }
+.primary-5 { background-color: #8C6DD7 }
+
+th {
+  font-weight: bold;
+}
+
+td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+}
+
+body {
+    font-family: 'Jura', sans-serif;
+}
+
+.fa-hover a:hover {
+  background-color: #F0F8FF;
+}
+
+th .email:before {
+  color: grey;
+  content: "\f003";
+  font-family: 'FontAwesome';
+  font-size: 120%;
+}
+
+th .nick:before {
+  color: grey;
+  content: "\f007";
+  font-family: 'FontAwesome';
+  font-size: 120%;
+}
+
+.conflicted .conflict:before {
+    color: red;
+    content: "\f071";
+    font-family: 'FontAwesome';
+    font-size: 120%;
+}
+
+tr.dirty {
+  font-style: italic;
+}
+
+td .dirty {
+  text-decoration:underline;
+}
+
+.committer .revert:before {
+    color: red;
+    content: "\f057";
+    font-family: 'FontAwesome';
+    font-size: 120%;
+}
+
+.committer .revert:hover:before {
+    color: red;
+    content: "\f05c";
+    font-family: 'FontAwesome';
+    font-size: 120%;
+}
+
+.committer .commit:before {
+    color: green;
+    content: "\f058";
+    font-family: 'FontAwesome';
+    font-size: 120%;
+}
+
+.committer .commit:hover:before {
+    color: green;
+    content: "\f05d";
+    font-family: 'FontAwesome';
+    font-size: 120%;
+}
+
+.pager .first:before {
+  font-family: 'FontAwesome';
+  content: "\f11e";
+}
+
+.pager .first.disabled:before {
+  content: "\f11d";
+}
+
+.pager .first:hover:before {
+  font-size: 120%;
+}
+
+.pager .previous:before {
+  font-family: 'FontAwesome';
+  content: "\f0a8";
+}
+
+.pager .previous.disabled:before {
+  content: "\f190";
+}
+
+.pager .previous:hover:before {
+  font-size: 120%;
+}
+
+.pager .next:before {
+  font-family: 'FontAwesome';
+  content: "\f0a9";
+}
+
+.pager .next.disabled:before {
+  content: "\f18e";
+}
+
+.pager .next:hover:before {
+  font-size: 120%;
+}
+
+.pager .cfg:before {
+  font-family: 'FontAwesome';
+  content: "\f013";
+}
+
+th .sortasc:after {
+  font-family: 'FontAwesome';
+  content: "\f150";
+}
+
+th .sortdesc:after {
+  font-family: 'FontAwesome';
+  content: "\f151";
+}
+
+th.email {
+  width: 10em;
+}
+
+th.nick {
+  width: 6em;
+}
+
+th.birth {
+  width: 10em;
+}
+
+th.height {
+  width: 5em;
+}
+
+tr.selected {
+  background-color: lightblue;
+}
+
+.proprenderer.editable:hover:after {
+    font-family: 'FontAwesome';
+    content: "\f044";
+
+}
+
+.proprenderer.dirty {
+  font-style: italic;
+}
+
+.proprenderer.birthdate {
+  min-width: 12em;
+}
+
+.entityeditor.footer {
+  width: 22em;
+  height: 2em;
+}
+
+
+a.createentity:before {
+  font-family: 'FontAwesome';
+  content: "\f196";
+}
+
+a.createentity:before:hover {
+  font-family: 'FontAwesome';
+  content: "\f0fe";
+}
+
+.completer .completerlist span {
+  display: block;
+}
+
+.completer .completerlist .selected {
+  background-color: lightblue;
+}
+
+
+.proprenderer .renderer {
+  padding: 1em;
+}

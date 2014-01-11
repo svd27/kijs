@@ -1,0 +1,61 @@
+start = logical
+
+logical = 
+   p1:primary sep r:logop sep p2:logical {
+    var js = JSON.parse("{}")
+    var oa = JSON.parse("[]")
+    js.relation = r
+    oa.push(p1)
+    oa.push(p2)
+    js.operands = oa
+    return js
+  }
+  / p1:negation {
+  return p1
+  }
+  / sep p1:primary sep {return p1}
+
+logop = 'AND' {return "AND"} / 'OR' {return "OR"} / 'and' {return "AND"} / 'or' {return "OR"} / '&&' {return "AND"} / '||' {return "OR"}
+negation = r:'NOT' sep p:logical {
+var js = JSON.parse('{}')
+   js.relation = 'NOT'
+   js.operand = p
+   return js
+}
+
+primary = f:filter  {return f}
+  / '(' sep g:logical sep ')' {
+   var js = JSON.parse('{}')
+   js.group = g
+   return g
+  }
+
+filter = n:name sep op:match sep v:value { 
+var name = n.join("")
+var value = v
+var js = JSON.parse('{}')
+console.log(name, op, value)
+js.property = name
+js.value = value
+js.relation = op
+return js
+
+}
+
+match =
+   '>=' {return "GTE"}
+  / '<=' {return "LTE"}
+  / '~=' {return "LIKE"}
+  / '=' {return "EQ"}
+  / '>' {return "GT"}
+  / '<' {return "LT"}
+
+
+name = [a-zA-Z]+
+
+value =
+  v : ([\+\-]?[0-9]+) {console.log("int:",v, v.toString(),  v[1].join("")); return parseInt(v[1].join(""))}
+  / v:([\+\-]?[0-9][0-9\.\,]+) {console.log("double:", v.join("")); return parseDouble(v[1].join(""))}
+  / '"' v:[^"]* '"' {return v.join("")}
+
+sep = [ \t\n]*

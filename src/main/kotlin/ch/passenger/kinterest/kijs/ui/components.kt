@@ -16,6 +16,7 @@ import ch.passenger.kinterest.kijs.model.EntityDescriptor
 import java.util.HashMap
 import ch.passenger.kinterest.kijs.model.InterestUpdateEvent
 import ch.passenger.kinterest.kijs.model.InterestOrderEvent
+import ch.passenger.kinterest.kijs.APP
 import ch.passenger.kinterest.kijs.filter
 import ch.passenger.kinterest.kijs.indexOf
 import ch.passenger.kinterest.kijs.none
@@ -41,29 +42,30 @@ import ch.passenger.kinterest.kijs.count
  * Created by svd on 08/01/2014.
  */
 
-abstract class Component<T : HTMLElement>(val id: String = BaseComponent.id()) : BaseComponent<T> {
+abstract class Component<T : HTMLElement>(id: String = BaseComponent.id(), name:String="div") : FlowContainer<T>(name, id) {
 
     override fun dispose() {
         disposables.forEach { dispose() }
     }
     override val disposables: MutableSet<Disposable> = HashSet()
 
-    override val root: T get() {
-        if (div == null) {
-            div = node()
-        }
-        div?.id = id
-        return div!!
-    }
-    var div: T? = null
     fun createElement(name: String): T = document.createElement(name) as T
 }
 
 class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
-    override fun node(): HTMLDivElement {
-        val div = Div()
+    override fun initialise(div:HTMLDivElement) {
+        val div = this
         val that = this
-
+        div.anchor {
+            textContent = "DUMP"
+            click {
+                val ax = Ajax("http://${APP!!.base}/dump")
+                ax.asObservabe().subscribe {
+                    console.log(JSON.parse<Json>(it))
+                }
+                ax.start()
+            }
+        }
         universe.galaxies.values().forEach {
             val g = it
 
@@ -140,7 +142,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                                 anchor {
                                     addClass("createentity")
                                     on("click") {
-                                        val ee = EntityEditor(interest, true)
+                                        val ee = GenericEntityEditor(interest, true)
 
                                         di+ ee;
                                     }
@@ -155,7 +157,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                                 div {
                                     addClass("interestdetail")
 
-                                    val ee = EntityEditor(tbl.interest)
+                                    val ee = GenericEntityEditor(tbl.interest)
                                     tbl.onSelection {
                                         if(it.iterator().hasNext()) {
                                             ee.entity = ai.entity(it.iterator().next())
@@ -173,9 +175,6 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                 this + di
             }
         }
-
-
-        return div.root
     }
 
     fun crtTable(ai:Interest) : InterestTable {
@@ -184,7 +183,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
         ai.galaxy.descriptor.properties.values().forEach {
             tbl.columns[it.property] = InterestTableColumn(it.property, ai)
         }
-        val cc = InterestTableColumn("commit", ai, { CommitRenderer() })
+        val cc = InterestTableColumn("commit", ai, { CommitRenderer(ai) })
         cc.headerRenderer.label = "Commit"
         tbl.columns["commit"] = cc
         return tbl
@@ -192,7 +191,26 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
 }
 
 
-open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+abstract class EntityEditor<T:HTMLElement>(val interest:Interest, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name) {
+    private var eid : Long = -1
+    var entity : Entity?
+      get() = if(eid>=0) interest.entity(eid) else null
+      set(v) {if(v?.id!=eid) {eid=v?.id?:-1; update()} }
+
+    {
+        disposables.add(interest.on {
+            when(it) {
+
+                is InterestLoadEvent -> { console.log("IE: my: ${entity?.id} <=> ${it.entity.id}"); if(it.entity.id == entity?.id) update() }
+                is InterestUpdateEvent -> {console.log("IE: my: ${entity?.id} <=> ${it.entity.id}"); if(it.entity.id == entity?.id) update()}
+            }
+        })
+    }
+
+    abstract fun update()
+}
+
+open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     var entity:Entity=if(creator) EntityTemplate(interest.galaxy.descriptor) else interest.galaxy.NOTLOADED
         set(v) {
             if($entity.id!=v.id) {
@@ -214,6 +232,7 @@ open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:Str
     var body : Div? = null
     var footer : Div? = null
     val updaters : MutableList<(Entity)->Unit> = ArrayList();
+    var commitRenderer : CommitRenderer? = null
 
     fun update(e:Entity) {
         if(e.id!=entity.id) return
@@ -246,12 +265,12 @@ open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:Str
         }
     }
 
-    override fun node(): HTMLDivElement {
+    override fun initialise(node:HTMLDivElement) {
         val desc = interest.galaxy.descriptor
         val that = this
         val en = entity
         var adl : DL? = null
-        val d = Div()
+        val d = this
 
         d.addClass("entityeditor")
         d.addClass("entitycreator")
@@ -285,8 +304,9 @@ open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:Str
         footer = d.div {
             that.footer = this
             that.footer?.addClass("footer")
-            val cr = CommitRenderer(that.creator)
+            val cr = CommitRenderer(that.interest, that.creator)
             cr.entity=that.entity
+            that.commitRenderer = cr
             that.updaters.add { cr.entity=it }
             plus(cr)
             if(that.creator) cr.subject.subscribe { that.remove() }
@@ -294,8 +314,6 @@ open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:Str
                 cr.update()
             }
         }
-
-        return d.root
     }
 
     fun addHeaderTerm(dl:DL, label:String, retrieve:(Entity)->String) {
@@ -309,6 +327,53 @@ open class EntityEditor(val interest:Interest, val creator:Boolean=false, id:Str
             that.updaters.add { dd.textContent = retrieve(it)}
         }
 
+    }
+}
+
+class Tab(val label:Tag<*>, val content:Tag<*>, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+
+    override fun initialise(n:HTMLDivElement) {
+        val d = this
+        d+label
+    }
+}
+
+class Tabber(val gesture:String="click", id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+    val tabs : MutableMap<String,Tab> = HashMap()
+    var selected: Tab? = null
+    val labelPane = Div()
+    val contentPane = Div()
+
+    override fun initialise(n:HTMLDivElement) {
+        val d = this
+        d.addClass("tabber")
+        labelPane.addClass("tablabels")
+        contentPane.addClass("tabcontent")
+        d+labelPane
+        d+contentPane
+    }
+
+    fun addTab(t:Tab) {
+        tabs[t.id] = t
+        labelPane+t
+        t.content.hide()
+        contentPane+t.content
+        t.on(gesture) {
+            select(t)
+        }
+        if(selected==null) {
+            select(t)
+        }
+    }
+
+    fun select(t:Tab) {
+        if(selected!=null) {
+            selected!!.removeClass("selected")
+            selected!!.content.hide()
+        }
+        selected = t
+        selected!!.addClass("selected")
+        selected!!.content.show()
     }
 }
 

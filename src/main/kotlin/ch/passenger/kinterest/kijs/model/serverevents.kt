@@ -19,8 +19,17 @@ public trait ServerInterestOrderEvent : ServerInterestEvent {
     val order : Array<Long>
 }
 
+public trait ServerInterestAddEvent : ServerInterestEvent {
+    val id : Long
+}
+
+public trait ServerInterestRemoveEvent : ServerInterestEvent {
+    val id : Long
+}
+
 public trait ServerInterestConfigEvent : ServerInterestEvent {
     val estimatedsize : Int
+    val currentsize : Int
     val offset : Int
     val limit : Int
     val orderBy : Array<Json>

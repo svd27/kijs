@@ -1,12 +1,15 @@
 start = logical
 
 logical = 
-   p1:primary sep r:logop sep p2:logical {
+   p1:primary sep r:logop sep p2:logical+ {
     var js = JSON.parse("{}")
     var oa = JSON.parse("[]")
     js.relation = r
     oa.push(p1)
-    oa.push(p2)
+    console.log(p2)
+    for(o in p2) {
+      oa.push(p2[o])
+    }
     js.operands = oa
     return js
   }
@@ -14,8 +17,10 @@ logical =
   return p1
   }
   / sep p1:primary sep {return p1}
+  / '(' logical ')'
 
 logop = 'AND' {return "AND"} / 'OR' {return "OR"} / 'and' {return "AND"} / 'or' {return "OR"} / '&&' {return "AND"} / '||' {return "OR"}
+
 negation = r:'NOT' sep p:logical {
 var js = JSON.parse('{}')
    js.relation = 'NOT'
@@ -30,17 +35,39 @@ primary = f:filter  {return f}
    return g
   }
 
-filter = n:name sep op:match sep v:value { 
+filter = 
+ n:name sep rel:to sep l:logical  {
+var name = n.join("")
+var value = l
+var js = JSON.parse('{}')
+js.property = name
+js.filter = value
+js.relation = rel
+return js
+}
+/ n:qname sep rel:from sep l:logical {
+var name = n
+var js = JSON.parse('{}')
+js.relation = "FROM"
+js.qname = n
+js.filter = l
+return js
+}
+/ n:name sep op:match sep v:value { 
 var name = n.join("")
 var value = v
 var js = JSON.parse('{}')
-console.log(name, op, value)
 js.property = name
 js.value = value
 js.relation = op
 return js
 
 }
+ 
+to = 
+  '->' {return "TO"}
+from = 
+  '<-' {return "FROM"}
 
 match =
    '>=' {return "GTE"}
@@ -53,9 +80,21 @@ match =
 
 name = [a-zA-Z]+
 
+qname = e:name '.' n:name {
+var js = JSON.parse("{}")
+js.entity = e.join("")
+js.property = n.join("")
+return js
+}
+
+digits = d:[0-9]+ {return d.join("")}
+int = ai:([\+\-]?digits+) {return ai[1].join("")}
+
+float = f:(int '.' digits) {return  f.join("")}
+
 value =
-  v : ([\+\-]?[0-9]+) {console.log("int:",v, v.toString(),  v[1].join("")); return parseInt(v[1].join(""))}
-  / v:([\+\-]?[0-9][0-9\.\,]+) {console.log("double:", v.join("")); return parseDouble(v[1].join(""))}
+  v:float {console.log("double:", v);  return parseFloat(v)}
+  / v : int { return parseInt(v)}
   / '"' v:[^"]* '"' {return v.join("")}
 
 sep = [ \t\n]*

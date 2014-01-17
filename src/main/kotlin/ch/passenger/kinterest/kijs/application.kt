@@ -21,6 +21,10 @@ import java.util.HashSet
 import ch.passenger.kinterest.kijs.model.JsonEntity
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.ServerEntityEvent
+import ch.passenger.kinterest.kijs.ui.Tabber
+import ch.passenger.kinterest.kijs.ui.Tab
+import ch.passenger.kinterest.kijs.ui.Span
+import ch.passenger.kinterest.kijs.diaries.OverviewPanel
 
 /**
  * Created by svd on 07/01/2014.
@@ -71,7 +75,8 @@ open class Application(val base: String) : Disposable {
                     val ja = JSON.parse<Array<JsonEntity>>(it.data)
                     ja.forEach {
                         val galaxy = ALL.galaxies[it.entity]!!
-                        val e = Entity(galaxy.descriptor, it.id)
+
+                        val e  : Entity = galaxy.heaven[it.id]?:Entity(galaxy.descriptor, it.id)
                         e.merge(it.values)
                         galaxy.retrieved(listOf(e))
                     }
@@ -93,7 +98,7 @@ open class Application(val base: String) : Disposable {
             val getGrammer = Ajax("http://$base/static/filter.grammar")
             getGrammer.asObservabe().subscribe {
                 filterParser = PEG.buildParser(it)
-                val test = filterParser?.parse("(state = \"ONLINE\") AND (strength>1)")
+                val test = filterParser?.parse<Json>("(state = \"ONLINE\") AND (strength>1)")
                 console.log(test?:"BAD")
             }
             getGrammer.start()
@@ -149,7 +154,12 @@ class DiariesApp(base:String) : Application(base) {
         val menu = UniverseMenu(ALL)
         val bl = document.getElementsByTagName("body")
         val root = Div(appname)
-        root + menu
+        val tabber = Tabber("mouseenter")
+        val ex = OverviewPanel()
+
+        tabber.addTab(Tab(Span{textContent="Universe"}, menu))
+        tabber.addTab(Tab(Span{textContent="Example"}, ex))
+        root + tabber
         bl.item(0).appendChild(root.root)
     }
 }

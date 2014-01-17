@@ -7,20 +7,97 @@ import moments.*
 import js.dom.html.*
 import rx.js.*
 import org.w3c.dom.events.MouseEvent
+import org.w3c.dom.events.Event
+import java.util.ArrayList
 
 /**
  * Created by svd on 10/01/2014.
  */
-trait EntityRendererEditor : CellRendererEditor {
+abstract class EntityRendererEditor<T:HTMLElement>(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name), CellRendererEditor {
+    private var eid : Long? = null
+    var create : Entity? = null
     var entity: Entity?
-    fun wants(ev: InterestUpdateEvent): Boolean
+        get() = if(creator) create else interest.galaxy.heaven[eid]
+        set(v) {
+            if(creator) create = v
+            eid = v?.id; update()
+        }
+    open fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
+
+
 }
 
-class CommitRenderer(val creator: Boolean = false) : Component<HTMLDivElement>(), EntityRendererEditor {
+class ActionListRenderer(ai:Interest, id:String=BaseComponent.id()) : EntityRendererEditor<HTMLDivElement>(ai, false, id) {
+    val actions : MutableList<ActionComponent> = ArrayList()
+    override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
+
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
+        d.addClass("actions")
+    }
+
+    override fun update() {
+        actions.forEach { it.entity = entity }
+    }
+
+    fun addAction(a:ActionComponent) {
+        console.log("adding action")
+        console.log(a)
+        actions.add(a)
+        plus(a)
+    }
+}
+
+abstract class ActionComponent(interest:Interest, id:String=BaseComponent.id()) : EntityRendererEditor<HTMLButtonElement>(interest, false, id, "button") {
+    private var eid : Long? = null
+
+
+    override fun initialise(n: HTMLButtonElement) {
+        root.`type` = "button"
+        this.addClass("action")
+        this.enabled(entity!=null)
+        on("click") {
+            it.preventDefault()
+            invoke(it)
+        }
+        init()
+    }
+
+
+    override fun update() {
+        this.enabled(entity!=null)
+    }
+    open protected fun init() {
+
+    }
+
+    abstract protected fun invoke(e:Event)
+}
+
+class RemoveEntityAction(interest:Interest, id:String=BaseComponent.id()) : ActionComponent(interest, id) {
+    override fun update() {
+        enabled(entity!=null)
+    }
+
+
+    override fun init() {
+        addClass("remove")
+    }
+    override fun invoke(e: Event) {
+        val e = entity
+        if(e!=null) interest.remove(e)
+    }
+    override fun wants(ev: InterestUpdateEvent): Boolean = ev.entity.id == entity?.id
+}
+
+class CommitRenderer(interest:Interest, creator: Boolean = false, id:String=BaseComponent.id()) : EntityRendererEditor<HTMLDivElement>(interest, creator, id) {
     val subject: Subject<Boolean> = Subject()
-    override var entity: Entity? = null
+
     var save: Anchor? = null
     var cancel: Anchor? = null
+    var alwaysCancel : Boolean = false
+      get() = $alwaysCancel || creator
+
 
     override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
 
@@ -31,11 +108,11 @@ class CommitRenderer(val creator: Boolean = false) : Component<HTMLDivElement>()
             cancel?.show()
         } else {
             save?.hide()
-            if(!creator) cancel?.hide()
+            if(!alwaysCancel) cancel?.hide()
         }
     }
-    override fun node(): HTMLDivElement {
-        val d = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         d.addClass("committer")
         val that = this
         save = d.anchor {
@@ -54,19 +131,13 @@ class CommitRenderer(val creator: Boolean = false) : Component<HTMLDivElement>()
                 that.entity?.revert()
                 that.subject.onNext(false)
             }
-            if (!that.creator) hide()
+            if (!that.alwaysCancel) hide()
         }
-
-        return d.root
     }
 }
 
-open class PropertyRendererEditor(val property: String, val intererst: Interest, var creator: Boolean = false) : Component<HTMLDivElement>(), EntityRendererEditor {
-    var container: Div? = null
-    override var entity: Entity? = null
-        set(v) {
-            $entity = v;update()
-        }
+open class PropertyRendererEditor(val property: String, intererst: Interest, creator: Boolean = false, id:String=BaseComponent.id()) : EntityRendererEditor<HTMLDivElement>(intererst, creator, id) {
+    var container: PropertyRendererEditor? = null
     val pd: PropertyDescriptor = intererst.galaxy.descriptor.properties[property]!!
     var rendererOnly: Boolean = false
         get()  {
@@ -88,14 +159,32 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
     open val conflictIndicator: Tag<*> = Span() { val sp = this; addClass("conflict"); on("mouseenter") { sp.addClass("fa-spin") }; on("mouseleave") { sp.removeClass("fa-spin") } }
     val canEdit : Boolean = (creator&&(pd.readonly||!pd.nullable)) || (!creator&&!pd.readonly)
 
-    override fun node(): HTMLDivElement {
-        val d = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         container = d
         d.addClass(property)
         d.addClass("proprenderer")
         if(canEdit) d.addClass("editable")
+        if(pd.nullable) d.addClass("nullable")
         d.data("property", property)
 
+        if(pd.nullable && !pd.readonly) {
+            d.anchor {
+                val that= this
+                addClasses("nullifier", "fa")
+                click {
+                    val e = d.entity
+                    console.log("nullify ${e?.id}:${d.property}")
+                    if(e!=null) e[d.property] = null
+                }
+                on("mouseenter") {
+                    that.addClass("fa-spin")
+                }
+                on("mouseleave") {
+                    that.removeClass("fa-spin")
+                }
+            }
+        }
 
         if (rendererOnly || !editorOnly) {
             hideEditor()
@@ -134,8 +223,6 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
         conflict.addClass("conflictrenderer")
 
         init()
-
-        return d.root
     }
 
     open fun init() {}
@@ -144,6 +231,7 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
         updateRenderer()
         updateEditor()
         updateConflict()
+        if(entity?.descriptor?.properties?.containsKey(property)?:false) {
         if (entity?.conflicted(property)?:false) {
             container?.addClass("conflicted")
             showConflictIndicator()
@@ -152,6 +240,7 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
             container?.addClass("dirty")
         } else container?.removeClass("dirty")
         if (entity?.conflicted(property)?:false) showConflictIndicator()
+        }
     }
 
     open fun updateRenderer() {
@@ -199,7 +288,8 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
 
     open fun value(v: Any?) {
         val e = entity;
-        if (e != null) {
+        console.log("$e $property $v ${e?.hasProperty(property)}")
+        if (e != null && e.hasProperty(property)) {
             if (v == null && !pd.nullable) throw IllegalArgumentException(property)
             e[property] = pd.cast(v)
         }
@@ -212,10 +302,12 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
     }
 
     open fun showEditor() {
+        addClass("editing")
         editor().show()
     }
 
     open fun hideEditor() {
+        removeClass("editing")
         editor().hide()
     }
 
@@ -230,6 +322,7 @@ open class PropertyRendererEditor(val property: String, val intererst: Interest,
     open fun conflictvalue(): Any? = entity?.realValue(property)
 
     protected open fun str(): String {
+        if(!(entity?.hasProperty(property)?:false)) return ""
         return entity?.get(property)?.toString()?:"---"
     }
 
@@ -346,29 +439,57 @@ class EnumRenderEdit(property: String, interest: Interest, creator:Boolean=false
     }
 }
 
+class TextAreaEdit(property: String, interest: Interest, creator:Boolean=false) : PropertyRendererEditor(property, interest, creator) {
+    private val ta = TextArea()
+    override fun editor(): Tag<out HTMLElement> = ta
+
+    {
+        editorOnly = true
+    }
+
+    override fun onChange() {
+        val ti = editor() as TextArea
+        console.log("setting value: ${ti.root.value}")
+        value(ti.root.value)
+    }
+
+    override fun editGesture() {
+        editor().on("input") {
+            onChange()
+        }
+    }
+
+
+    override fun updateEditor() {
+        ta.root.value = str()
+    }
+
+
+}
+
+
 class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean = false) : PropertyRendererEditor(property, interest, creator) {
-    var completer : CustomCompleter? = null
-    private var adiv : Div = initEditor()
+    var completer : CustomCompleter = CustomCompleter(interest.galaxy, createProjections(), findLabel())
+    private var adiv : Div = Div();
+    {adiv.plus(completer); completer.silent = true}
     override fun editor() : Tag<out HTMLElement> = adiv
 
-    fun initEditor(): Div {
-        val g = ALL.galaxies[pd.entity]!!
-        val pit = g.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
+    fun createProjections(): Array<String> {
+        val pit = interest.galaxy.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
         val c = pit.count()
         val ait = pit.iterator()
-        val pa = Array<String>(c) { ait.next() }
-        var lbl = g.descriptor.properties.values().firstThat { it.label }?.property
+        return Array<String>(c) { ait.next() }
+    }
+
+    fun findLabel(): String {
+        var lbl = interest.galaxy.descriptor.properties.values().firstThat { it.label }?.property
         if(lbl==null) {
-            lbl = g.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
+            lbl = interest.galaxy.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
         }
         if(lbl==null) lbl = "id"
-        val root = Div()
-        completer = CustomCompleter(g, pa, lbl!!)
-
-        root + completer!!
-        console.log("completer ready")
-        return root
+        return lbl!!
     }
+
 
     val label : String;
 
@@ -383,12 +504,14 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
         renderer.on("dblclick") {
             hideRenderer()
             showEditor()
-            renderer.root.focus()
+            console.log("start completing on ${editor().id}")
+            editor().root.focus()
         }
 
 
         completer!!.onBlur {
             console.log("BLURRRRR")
+
             hideEditor()
             showRenderer()
         }
@@ -396,9 +519,27 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
         completer!!.on { value(it?.id) }
     }
 
+
+    override fun showEditor() {
+        addClass("editing")
+        console.log("completer $id show: list#${completer.list.id}")
+        editor().show()
+        completer?.silent=false
+    }
+
+
+    override fun hideEditor() {
+        removeClass("editing")
+        editor().hide()
+        completer?.silent=true
+    }
     override fun str(): String {
-        if(completer==null) return ""
-        return "${completer?.selected?.get(label)}"
+        val e = entity
+        if(e==null) return ""
+        val v = e[property]
+        if(v==null) return ""
+        val re = ALL.galaxies[pd.entity]!!.heaven[v]
+        return re?.get(label)?.toString()?:"---"
     }
 }
 
@@ -406,8 +547,8 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
 
 class HeaderRenderer(val interest: Interest, val property: String, var label: String = property, val sortable: Boolean = true, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
-    override fun node(): HTMLDivElement {
-        val d = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         val that = this
         d.on("click") {
             val ev = it as MouseEvent
@@ -448,6 +589,5 @@ class HeaderRenderer(val interest: Interest, val property: String, var label: St
                 }
             }
         }
-        return d.root
     }
 }

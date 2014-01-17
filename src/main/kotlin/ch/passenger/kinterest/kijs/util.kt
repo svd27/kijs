@@ -12,8 +12,30 @@ import org.w3c.dom.Node
  * Created by svd on 07/01/2014.
  */
 
+fun<T> Set<T>.minus(os:Set<T>) : Set<T> {
+    val res = HashSet<T>()
+    this.filter { !os.contains(it) }.forEach { res.add(it) }
+    return res
+}
+
+fun<T> Set<T>.same(os:Set<T>) : Boolean {
+    val s1 = this-os
+    val s2 = os-this
+    return s1.isEmpty() && s2.isEmpty()
+}
+
+fun<T> MutableCollection<T>.addAll(it:Iterable<T>) {
+    it.forEach { add(it) }
+}
+
 fun<T> Array<T>.forEach(cb: (T)->Unit) {
     for(it in this) cb(it)
+}
+
+fun<T> Array<T>.filter(cb: (T)->Boolean) : Iterable<T> {
+    val res = ArrayList<T>()
+    for(it in this) if(cb(it)) res.add(it)
+    return res
 }
 
 fun<T> Array<T>.contains(t:T) :Boolean = any { it==t }
@@ -53,6 +75,13 @@ fun<T> Iterable<T>.filter(cb: (T)->Boolean) : Iterable<T> {
 fun<T,U> Iterable<T>.map(cb: (T)->U) : Iterable<U> {
     val res = ArrayList<U>()
     this.forEach { res.add(cb(it)) }
+    return res
+}
+
+fun<T,U> Iterable<T>.mapIdx(cb: (T,Int)->U) : Iterable<U> {
+    val res = ArrayList<U>()
+    var idx = 0
+    this.forEach { res.add(cb(it, idx++)) }
     return res
 }
 
@@ -109,7 +138,19 @@ fun<K,V> mapOf(ps:Iterable<Tuple2<K,V>>) : Map<K,V> {
     return m
 }
 
+fun<K,V> mapOf(vararg ps:Tuple2<K,V>) : Map<K,V> {
+    val m = HashMap<K,V>()
+    ps.forEach { m.put(it.first, it.second) }
+    return m
+}
+
 fun<T> setOf(vararg ts:T) : Set<T> {
+    val s = HashSet<T>()
+    ts.forEach { s.add(it) }
+    return s
+}
+
+fun<T> setOf(ts:Iterable<T>) : Set<T> {
     val s = HashSet<T>()
     ts.forEach { s.add(it) }
     return s
@@ -119,6 +160,24 @@ fun<T> listOf(vararg ts:T) : List<T> {
     val l = ArrayList<T>(ts.size)
     ts.forEach { l.add(it) }
     return l
+}
+
+fun<T> Iterable<T>.makeString(sep:String="", prefix:String="", postFix:String="") :String {
+    val b = this.reduce(StringBuilder()) {
+        (init, next) ->
+        if(init.toString().size>0) init.append("$sep$next")
+        else init.append("$next")
+    }
+    return "$prefix$b$postFix"
+}
+
+fun<T> Array<T>.makeString(sep:String="", prefix:String="", postFix:String="") :String {
+    val b = this.reduce(StringBuilder()) {
+        (init, next) ->
+        if(init.toString().size>0) init.append("$sep$next")
+        else init.append("$next")
+    }
+    return "$prefix$b$postFix"
 }
 
 public class Tuple2<A, B> (
@@ -163,6 +222,12 @@ fun HTMLOptionsCollection.indexWhere(cb:(HTMLOptionElement)->Boolean) : Int {
     return -1
 }
 
+fun NodeList.filter(cb:(Node)->Boolean) : Iterable<Node> {
+    val fl = ArrayList<Node>()
+    for(i in 0..(this.length-1)) if(cb(item(i))) fl.add(item(i))
+    return fl
+}
+
 fun NodeList.forEach(cb:(Node)->Unit) {
     for(i in 0..(this.length-1)) cb(item(i))
 }
@@ -177,3 +242,5 @@ fun<T> NodeList.map(cb:(Node)->T) : Iterable<T> {
     for(i in 0..(this.length-1)) res.add(cb(item(i)))
     return res
 }
+
+fun<T,U> T.to(a:U) : Tuple2<T,U> = Tuple2(this, a)

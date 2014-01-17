@@ -20,6 +20,7 @@ import ch.passenger.kinterest.kijs.listOf
 import rx.js.Disposable
 import moments.Moment
 import ch.passenger.kinterest.kijs.all
+import java.util.HashSet
 
 /**
  * Created by svd on 07/01/2014.
@@ -60,8 +61,7 @@ public class PropertyDescriptor(json:Json) {
         if(scalars.contains(datatype)) return toInt(v)
         if(floats.contains(datatype)) return  toFloat(v)
         if(dates.contains(datatype)) {
-            if(v is String) return moments.moment(v, dateformat)
-            if(v is Number) return moments.moment(v.toString(), dateformat)
+            return moments.moment(v.toString(), dateformat)
         }
 
         return v
@@ -71,7 +71,7 @@ public class PropertyDescriptor(json:Json) {
         if(v==null) return v
         if(dates.contains(datatype)) {
             val m = v as Moment
-            return v.format(dateformat)
+            return m.format(dateformat)
         }
         return v
     }
@@ -85,23 +85,35 @@ public class PropertyDescriptor(json:Json) {
     }
 }
 
-
+public enum class EntityState {CREATED LOADED DELETED REMOVED}
 
 public open class Entity(public val descriptor : EntityDescriptor, public val id : Long ) {
     protected val values : MutableMap<String,Any?> = HashMap()
     protected val written : MutableMap<String,Any?> = HashMap()
     protected val wroteOn : MutableMap<String,Any?> = HashMap()
     public var updateHook : (Entity)->Unit = {}
+    private var _state : EntityState = EntityState.CREATED
+    public val state : EntityState get() = _state
 
     public fun merge(json:Json) {
         descriptor.properties.values().forEach {
             val v = json.get(it.property)
-            values[it.property] = it.cast(v)
+            val cast = it.cast(v)
+            values[it.property] = cast
+            if(it.relation && cast != null) {
+                ALL.galaxies[descriptor.entity]!!.goodRelations(it.entity, cast as Long)
+            }
         }
+        _state = EntityState.LOADED
     }
 
     public fun update(ue:ServerEntityUpdateEvent) {
         values[ue.property] = descriptor.properties[ue.property]!!.cast(ue.value)
+        updateHook(this)
+    }
+
+    public fun mergeProperty(p:String, v:Any?) {
+        values[p] = v
         updateHook(this)
     }
 
@@ -113,6 +125,10 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
     public fun set(p:String, v:Any?) {
         wroteOn[p] = values[p]
         written[p] = v
+        val pd = descriptor.properties[p]!!
+        if(pd.relation && v != null) {
+            ALL.galaxies[descriptor.entity]!!.goodRelations(pd.entity, v as Long)
+        }
         ALL.galaxies[descriptor.entity]?.updated(this, p, wroteOn[p])
         updateHook(this)
     }
@@ -146,12 +162,23 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
         if(id>=0) je.set("id", id)
         je.set("entity", descriptor.entity)
         je.set("values", jv)
+        console.log(je)
         return je
     }
 
     fun save() {
         ALL.galaxies[descriptor.entity]!!.save(this)
     }
+
+    fun removed() {
+        _state = EntityState.REMOVED
+    }
+
+    fun deleted() {
+        _state = EntityState.DELETED
+    }
+
+    fun hasProperty(p:String) : Boolean = descriptor.properties.containsKey(p)
 
     public fun equals(o:Any?) : Boolean {
         if(o is Entity) return o.id == id
@@ -185,15 +212,28 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     val heaven : MutableMap<Long,Entity> = HashMap()
     val interests : MutableMap<Int,Interest> = HashMap()
     val NOTLOADED : Entity = Entity(descriptor, -1)
+    val retrieving : MutableSet<Long> = HashSet()
+    val subRetriever : Subject<Long> = Subject<Long>();
 
-    fun retrieve(ids:Iterable<Long>) {
+    {
+        subRetriever.bufferWithTimeOrCount(400, 100).subscribe { dretrieve(it) }
+    }
+
+    fun retrieve(ids:Iterable<Long>) = ids.filter { !heaven.containsKey(it) || heaven[it]?.state!=EntityState.LOADED }.forEach { subRetriever.onNext(it) }
+
+    fun dretrieve(ids:Array<Long>) {
+        val list = ArrayList<Long>()
+        ids.filter { !retrieving.contains(it) }.forEach { retrieving.add(it); list.add(it) }
+
+        if(list.size()>0) {
         val req = Ajax("http://${APP!!.base}/${descriptor.entity}/retrieve", "POST")
 
-        req.start(JSON.stringify(ids))
+        req.start(JSON.stringify(list))
+        }
     }
 
     fun retrieved(entities:Iterable<Entity>) {
-        entities.forEach { heaven[it.id] = it }
+        entities.forEach { heaven[it.id] = it; retrieving.remove(it) }
         interests.values().forEach { it.retrieved(entities) }
     }
 
@@ -229,10 +269,13 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
         req.start(JSON.stringify(json))
     }
 
-    fun get(id:Long) : Entity = if(id in heaven.keySet()) heaven[id]!! else NOTLOADED
+    fun get(id:Long) : Entity = if(id in heaven.keySet()) heaven[id]!! else {subRetriever.onNext(id); NOTLOADED; }
     fun contains(id:Long) = id in heaven.keySet()
 
     fun consume(ev:ServerInterestEvent) {
+        if(ev is ServerInterestOrderEvent) {
+            ev.order.filter { !heaven.containsKey(it) }.forEach { heaven[it] = Entity(descriptor, it) }
+        }
         interests[ev.interest]?.consume(ev)
     }
 
@@ -259,33 +302,39 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
 
     public fun goodRelations(entity:String, rid:Long) {
         val that = this
+        //TODO: can we optimise this not to use an interest for relations V -> V?
         if(!relations.containsKey(entity)) {
-            ALL.galaxies[entity]!!.create("${descriptor.entity}-relations-${entity}") {
-                relations[entity] = it
+            ALL.galaxies[entity]!!.create("${descriptor.entity}relations${entity}") {
+                console.log("Good Vibrations ${it.name} ${it.id}")
+                that.relations[entity] = it
                 it.eager = true
                 keepRelations(it)
-                it+rid
+                it.plus(rid)
             }
+        } else {
+            relations[entity]?.plus(rid)
         }
     }
 
-    private fun keepRelations(i:Interest, pd:PropertyDescriptor) {
+    private fun keepRelations(i:Interest) {
+        val that = this
         i.on {
-            when(it) {
-              is InterestLoadEvent -> {
-                  val le = it as InterestLoadEvent
-                  heaven.values().forEach {
-                      val entity = it
-                      it.descriptor.properties.values().filter {
-                          it.relation && it.entity==i.galaxy.descriptor.entity
+              if(it is InterestEntityEvent)  {
+                  val le = it as InterestEntityEvent
+                  that.descriptor.properties.values().filter {
+                      it.relation && (it.entity == le.entity.descriptor.entity)
+                  }.forEach {
+                      val pd = it
+                      that.heaven.values().filter {
+                          it[pd.property] == le.entity.id
                       }.forEach {
-                          val old = entity[it.property]
-                          entity[it.property] = le.entity.id
-                          updated(entity, it.property, old)
+                          //console.log("vibe from ${le.entity.descriptor.entity}.${le.entity.id} -${pd.property}-> ${it.descriptor.entity}.${it.id}");
+                          updated(it, pd.property, it[pd.property])
                       }
                   }
               }
-            }
+
+
         }
     }
 }
@@ -297,10 +346,11 @@ public class GalaxyLoadEvent(galaxy:Galaxy, val entities:Iterable<Entity>) : Gal
 
 public open class InterestEvent(val interest:Interest)
 public class InterestConfigEvent(interest:Interest) : InterestEvent(interest)
-public open class InterestLoadEvent(interest:Interest, val entity:Entity, val idx:Int) : InterestEvent(interest)
 public open class InterestRemoveEvent(interest:Interest, val ids:Array<Long>) : InterestEvent(interest)
 public open class InterestOrderEvent(interest:Interest, val order:Array<Long>) : InterestEvent(interest)
-public open class InterestUpdateEvent(interest:Interest, val entity:Entity, val idx:Int, val property:String, val old:Any?) : InterestEvent(interest)
+public open class InterestEntityEvent(interest:Interest, val entity:Entity) : InterestEvent(interest)
+public open class InterestLoadEvent(interest:Interest, entity:Entity, val idx:Int) : InterestEntityEvent(interest, entity)
+public open class InterestUpdateEvent(interest:Interest, entity:Entity, val idx:Int, val property:String, val old:Any?) : InterestEntityEvent(interest, entity)
 
 public enum class SortDirection {ASC DESC}
 public class SortKey(val property:String, var direction:SortDirection) {fun toggle() {if(direction==SortDirection.ASC) direction=SortDirection.DESC else direction=SortDirection.ASC} }
@@ -311,6 +361,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     var offset : Int = 0
     var limit : Int = 0
     var size : Int = 0
+    var estimated : Int = 0
     val orderBy : MutableList<SortKey> = ArrayList()
 
     fun sort(keys:Array<SortKey>) {
@@ -327,13 +378,15 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     }
 
     fun cfg(cfg:ServerInterestConfigEvent) {
-       size = cfg.estimatedsize
+       size = cfg.currentsize
+       estimated = cfg.estimatedsize
+       console.log("${galaxy.descriptor.entity}.$id: current: $size estimated: $estimated offset: $offset limit: $limit")
        offset = cfg.offset
        limit  = cfg.limit
        val oa = cfg.orderBy
         orderBy.clear()
         oa.forEach {
-            console.debug(it)
+            //console.debug(it)
             orderBy.add(SortKey(it.get("property")!!.toString(), SortDirection.valueOf(it.get("direction")!!.toString())))
         }
         subject.onNext(InterestConfigEvent(this))
@@ -360,6 +413,9 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     fun plus(aid:Long) {
         val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/add/${aid}", "GET")
         req.start()
+        if(eager) {
+            galaxy.retrieve(listOf(aid))
+        }
     }
 
     fun remove(e:Entity) {
@@ -384,20 +440,40 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
         val ol = Array<Long>(order.size()) {order[it]}
 
         order.clear()
-        subject.onNext(InterestRemoveEvent(this, ol));
+        //subject.onNext(InterestRemoveEvent(this, ol));
         for(it in nwo) order.add(it)
         if(eager) galaxy.retrieve(order)
+        //console.warn("${galaxy.descriptor.entity}.${id} order now")
+        //console.log(order)
         subject.onNext(InterestOrderEvent(this, order.copyToArray()))
     }
 
     fun retrieved(ids:Iterable<Entity>) {
-        ids.filter { it.id in order }.map { Tuple2(order.indexOf(it.id), it) }.forEach { subject.onNext(InterestLoadEvent(this, it.second, it.first)) }
+        //console.log("$name RETRIEVED $ids")
+        ids.filter { val aid = it.id;  order.any {it==aid}  }.map { Tuple2(order.indexOf(it.id), it) }.forEach {
+            //console.log("ILOADEVT ${it.first}")
+            subject.onNext(InterestLoadEvent(this, it.second, it.first))
+        }
     }
 
     fun consume(ev:ServerInterestEvent) {
         when (ev.kind) {
             "ORDER" -> onOrder((ev as ServerInterestOrderEvent).order)
             "INTEREST" -> cfg((ev as ServerInterestConfigEvent))
+            "ADD" -> {
+                val ae = ev as ServerInterestAddEvent
+                val no = ArrayList<Long>()
+                no.addAll(order)
+                no.add(ae.id)
+                onOrder(no.copyToArray())
+            }
+            "REMOVE" -> {
+                val ae = ev as ServerInterestAddEvent
+                val no = ArrayList<Long>()
+                no.addAll(order)
+                no.remove(ae.id)
+                onOrder(no.copyToArray())
+            }
         }
     }
 
@@ -422,8 +498,10 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     }
 
     fun next() {
-        if(offset+limit<size)
-        buffer(offset+limit, limit)
+        if(offset+limit<size) {
+            console.log("$offset -> ${offset+limit}")
+            buffer(offset+limit, limit)
+        }
     }
 }
 
@@ -449,7 +527,7 @@ class PropertyFilter(descriptor:EntityDescriptor, val op:String, val property:St
         json.set("relation", op)
         json.set("property", property)
         if(property!="id" ) json.set("value", descriptor.properties[property]!!.cast(value)) else json.set("value", value)
-        if(op=="LIKE" || op=="NOTLIKE") json.set("value", "$value.*")
+        if(op=="LIKE" || op=="NOTLIKE") json.set("value", "$value")
         return json
     }
 }

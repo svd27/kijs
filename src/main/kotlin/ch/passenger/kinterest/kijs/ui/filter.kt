@@ -28,27 +28,28 @@ import ch.passenger.kinterest.kijs.model.Entity
 import rx.js.Subject
 import rx.js.Disposable
 import org.w3c.dom.events.Event
+import ch.passenger.kinterest.kijs.filter
+import ch.passenger.kinterest.kijs.makeString
+import ch.passenger.kinterest.kijs.APP
+import ch.passenger.kinterest.kijs.model.EntityState
 
 /**
  * Created by svd on 10/01/2014.
  */
 class FilterComponent(val interest: Interest, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
-    override fun node(): HTMLDivElement {
-        val d = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         d.addClasses("filter", interest.galaxy.descriptor.entity)
-
-
-        return d.root
     }
 }
 
 class FilterRow(val interest: Interest, val property: PropertyDescriptor, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     var value: Tag<*> = TextInput()
     var op: String = "EQ"
-    val row: Div = Div()
+    val row: FlowContainer<HTMLDivElement> = this
 
-    override fun node(): HTMLDivElement {
+    override fun initialise(n: HTMLDivElement) {
         row.select {
             if (!property.enum) {
                 option("EQ", "=") { }
@@ -64,7 +65,6 @@ class FilterRow(val interest: Interest, val property: PropertyDescriptor, id: St
         }
 
         update()
-        return row.root
     }
 
     fun update() {
@@ -90,76 +90,90 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
     var interest: Interest? = null
     val input: TextInput = TextInput();
     val list: Div = Div()
-    val candidates : MutableList<Entity> = ArrayList()
-    var selected : Entity? = null
+    val candidates : MutableList<Long> = ArrayList()
+    var selected : Long? = null
     val subject : Subject<Entity?> = Subject()
+    var silent : Boolean = false
+      set(v) {
+          candidates.clear()
+          selected = null
+      }
 
+    var createFilter : (String)->String = {
+        (pre) ->
+        projections.map { "$it ~= \"$pre.*\"" }.makeString(" or ")
+    }
+
+    {
+        this.onReady { build() }
+    }
 
     fun on(cb:(Entity?)->Unit) : Disposable = subject.subscribe(cb)
 
-    override fun node(): HTMLDivElement {
-        val d = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         d.addClass("completer")
         input.addClasses("completerinput", galaxy.descriptor.entity)
         list.addClass("completerlist")
         d+input
         d+list
-        return d.root
     }
 
-    {
-        console.log("Completer ${galaxy.descriptor.entity} ${label} proj: ${projections.reduce("") {(i, n) -> "$i $n" }}")
+    fun build() {
+        console.log("completer: list#${list.id}")
         val that = this
         val input = this.input
-        val projections = this.projections
         val galaxy = this.galaxy
         val dl = list
         val candidates = that.candidates
-        val selected = that.selected
         galaxy.create("completer") {
             that.interest = it
-            input.on("keyup").select { input.value }.where { it.length > 0 }.throttle(750).distinctUntilChanged().subscribe {
+            that.input.on("keyup").select { input.value }.where { it.length > 0 }.throttle(750).distinctUntilChanged().subscribe {
+                if(!that.silent) {
                 val search: String = it
-                val f = RelationFilter(galaxy.descriptor, "OR", Array<PropertyFilter>(projections.size) { PropertyFilter(galaxy.descriptor, "LIKE", projections[it], "$search.*") })
-                console.log("COMPLETER START: ${JSON.stringify(f.serialise())}")
-                dl.removeChildren()
+                //val f = RelationFilter(galaxy.descriptor, "OR", Array<PropertyFilter>(projections.size) { PropertyFilter(galaxy.descriptor, "LIKE", projections[it], "$search.*") })
+                //console.log("COMPLETER START: ${JSON.stringify(f.serialise())}")
+                that.list.removeChildren()
                 candidates.clear()
-                that.interest?.filter(f)
+                    val fs = createFilter(search)
+                    console.log("filter: $fs")
+                    that.interest?.filterJson(APP!!.filterParser!!.parse<Json>(fs)!!)
+                }
             }
             val kd = input.on("keydown")
             kd.where { console.log(it); val ke = it as KeyboardEvent; console.log(ke.keyCode); ke.keyCode in listOf(13, 38,40) }.subscribe {
                 val ke = it as KeyboardEvent
-                console.log(ke)
 
                 if (ke.keyCode in listOf(13)) {
                     if(that.selected!=null) {
-                        that.input.value = that.selected!![that.label].toString()
-                        subject.onNext(that.selected)
-                        dl.removeChildren()
+                        val entity = that.interest?.entity(that.selected!!)!!
+                        that.input.value = entity[that.label].toString()
+                        if(!that.silent)
+                          subject.onNext(entity)
+                        that.list.removeChildren()
                     }
                 } else {
                     var idx = -1
                     if (that.selected!=null) {
-                        for(i in 0..(candidates.size()-1)) {
-                            if(candidates[i].id==that.selected?.id) idx = i
+                        for(i in 0..(that.candidates.size()-1)) {
+                            if(that.candidates[i]==that.selected) idx = i
                         }
                     }
                     console.log("indexof: $idx kc: ${ke.keyCode}")
                     if(idx<0) idx = 0
                     else if(ke.keyCode==(38 as Long)) {
-                        if(idx==0) idx=candidates.size()-1
+                        if(idx==0) idx=that.candidates.size()-1
                         else idx=idx-1
                     } else if(ke.keyCode==(40 as Long)) {
-                        if(idx+1>=candidates.size()) idx = 0
+                        if(idx+1>=that.candidates.size()) idx = 0
                         else idx=idx+1
                     }
                     console.log("selected idx $idx")
-                    if(idx>=0 && idx<candidates.size()) that.selected = candidates[idx]
+                    if(idx>=0 && idx<that.candidates.size()) that.selected = that.candidates[idx]
                     console.log(that.selected?:"")
-                    dl.root.childNodes.forEach {
+                    that.list.root.childNodes.forEach {
                         val o = KIDATAget(it as HTMLElement, "entity")
-                        console.log("compare $o = ${that.selected?.id}")
-                        if(o=="${that.selected?.id}") it.classList.add("selected")
+                        if(o=="${that.selected}") it.classList.add("selected")
                         else it.classList.remove("selected")
                     }
                 }
@@ -168,25 +182,48 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
             }
             that.interest?.eager = true
             that.interest?.on {
-                val ai = it.interest
-
-                console.log("completer")
+                console.log(it)
+                console.log("event looks at list#${that.list.id}")
                 when(it) {
                     is InterestLoadEvent -> {
+                        console.log("COMPLETE LOAD ${it.entity.id}")
                         console.log(it)
-                        if(!candidates.contains(it.entity)) {
-                            candidates.add(it.entity)
+                        if(!that.candidates.contains(it.entity.id)) {
+                            that.candidates.add(it.entity.id)
                         }
 
-                        dl.removeChildren()
-                        for(i in 0..(candidates.size()-1)) {
-                            dl.span {
-                                val entity = candidates[i]
-                                data("entity", "${entity.id}")
-                                data("order", "$i")
-                                textContent = entity[that.label].toString()
+                        val e = it.entity
+                        that.list.root.childNodes.filter { it.nodeName.toLowerCase() == "span" }.forEach {
+                            val did = KIDATAget(it as HTMLElement, "entity")
+                            console.log("$did == ${e.id} = ${did == "${e.id}"}")
+                            if(did == "${e.id}") {
+                                it.textContent = e[label]?.toString()?:did
+                            }
+                        }
 
-                                if(entity==selected) addClass("selected")
+                    }
+                    is InterestOrderEvent -> {
+                        that.candidates.clear()
+                        that.list.removeChildren()
+                        console.log("COMPLETE ORDER ${that.root.id}:${dl.id} ${that.list.id}")
+                        console.log(it.order)
+                        it.order.forEach { that.candidates.add(it) }
+                        console.log(that.candidates)
+                        that.list.removeChildren()
+                        for(i in 0..(that.candidates.size()-1)) {
+                            that.list.span {
+                                console.log("ADDING $i")
+                                console.log(this)
+                                val eid = that.candidates[i]
+                                data("entity", "${eid}")
+                                data("order", "$i")
+                                val entity = that.interest?.entity(eid)
+                                if(entity?.state!=EntityState.LOADED) {
+                                    textContent = "$eid"+entity?.state
+                                } else
+                                    textContent = entity?.get(that.label)?.toString()?:"BAD"
+
+                                if(eid==that.selected) addClass("selected")
                             }
                         }
                     }
@@ -197,61 +234,5 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
     }
 
     public fun onBlur(cb:(Event)->Unit) : Disposable = input.on("blur", cb)
-}
-
-
-class Completer(val galaxy: Galaxy, val projections: Array<String>, val label: String, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
-    var interest: Interest? = null
-    val input: TextInput = TextInput();
-    val list: DataList = DataList()
-
-
-    override fun node(): HTMLDivElement {
-        val d = Div()
-        input.addClasses("completer", galaxy.descriptor.entity)
-        input.att("list", list.id)
-        d+input
-        d+list
-        return d.root
-    }
-
-    {
-        console.log("Completer ${galaxy.descriptor.entity} ${label} proj: ${projections.reduce("") {(i, n) -> "$i $n" }}")
-        val that = this
-        val input = this.input
-        val projections = this.projections
-        val galaxy = this.galaxy
-        val dl = list
-        galaxy.create("completer") {
-            that.interest = it
-            input.on("keyup").select { input.value }.where { it.length > 2 }.throttle(750).distinctUntilChanged().subscribe {
-                val search: String = it
-                val f = RelationFilter(galaxy.descriptor, "OR", Array<PropertyFilter>(projections.size) { PropertyFilter(galaxy.descriptor, "LIKE", projections[it], "$search.*") })
-                console.log("COMPLETER START: ${JSON.stringify(f.serialise())}")
-                that.interest?.filter(f)
-            }
-            that.interest?.eager = true
-            that.interest?.on {
-                val ai = it.interest
-                console.log("completer $it")
-                when(it) {
-                    is InterestLoadEvent -> {
-                        dl.removeChildren()
-                        val did = "${it.entity.id}"
-
-                        val fd = dl.root.childNodes.any {
-                            val on = it as HTMLOptionElement
-                            on.value == did
-                        }
-                        if (!fd) {
-                            dl.option("$did", "${it.entity[that.label]}") { }
-                        }
-                        that.input.att("list", that.list.id)
-                    }
-                }
-
-            }
-        }
-    }
 }
 

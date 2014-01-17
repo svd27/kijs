@@ -78,6 +78,28 @@ td .dirty {
     font-size: 120%;
 }
 
+.proprenderer.nullable .nullifier:after {
+    color: red;
+    content: "\f05e";
+    font-family: 'FontAwesome';
+
+}
+
+.proprenderer.nullable:hover .nullifier:after {
+  display: inline;
+  float: right;
+  top: 0em;
+  font-size: 120%;
+}
+
+.proprenderer .nullifier:after {
+  display: none;
+}
+
+.proprenderer.editing {
+  border: 3px solid orange;
+}
+
 .pager .first:before {
   font-family: 'FontAwesome';
   content: "\f11e";
@@ -190,7 +212,93 @@ a.createentity:before:hover {
   background-color: lightblue;
 }
 
+tr.selected .completer .completerlist .selected {
+  background-color: ivory;
+}
+
 
 .proprenderer .renderer {
   padding: 1em;
 }
+
+.tabber {
+  layout: block;
+}
+
+.tabber .tabcontent {
+float: left;
+clear: both;
+}
+.tablabels > div {
+  float: left;
+}
+
+.tablabels .selected {
+  background-color: lightblue;
+}
+
+
+
+
+
+dt {
+  border: 1px solid #999;
+  float:left;
+  min-width: 14em;
+}
+dd {
+}
+
+.active {
+  background-color: magenta;
+}
+
+.actions button {
+  border: none;
+  background-color: transparent;
+}
+
+.actions .action.remove:before {
+  font-family: 'FontAwesome';
+  content: "\f12d";
+}
+
+.actions .action:before:hover {
+  font-size: 120%;
+}
+
+.actions .action:before:disabled {
+  color: grey;
+}
+
+.actions .action:before:disabled:hover {
+  font-size: 90%;
+}
+
+.actions .action.detail:before {
+  font-family: 'FontAwesome';
+  content: "\f05a";
+}
+
+.actions .action.detail:disabled:before {
+  font-family: 'FontAwesome';
+  content: "\f129";
+}
+
+.actions .action.create:before {
+  font-family: 'FontAwesome';
+  content: "\f196";
+}
+
+.actions .action.create:before:hover {
+  font-family: 'FontAwesome';
+  content: "\f0fe";
+}
+
+.actions .action.edit:before {
+  font-family: 'FontAwesome';
+  content: "\f044";
+}
+
+
+

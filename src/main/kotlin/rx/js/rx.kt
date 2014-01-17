@@ -27,6 +27,7 @@ public open native("Rx.Subject") class Subject<T>() : Observer<T>, Observable<T>
     override fun where(cb:(T)->Boolean) : Observable<T> = js.noImpl
     override fun throttle(ms:Long) : Observable<T> = js.noImpl
     override fun distinctUntilChanged() : Observable<T> = js.noImpl
+    override fun bufferWithTimeOrCount(timeSpan: Long, count: Int): Observable<Array<T>> = js.noImpl
 }
 
 public open native("Rx.AsyncSubject") class AsyncSubject<T>() : Subject<T>()
@@ -48,6 +49,7 @@ native trait Observable<T> {
     fun where(cb:(T)->Boolean) : Observable<T>
     fun throttle(ms:Long) : Observable<T>
     fun distinctUntilChanged() : Observable<T>
+    fun bufferWithTimeOrCount(timeSpan:Long, count:Int) : Observable<Array<T>>
 }
 
 native trait Observer<T> {

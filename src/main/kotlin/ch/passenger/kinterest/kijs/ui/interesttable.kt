@@ -13,23 +13,64 @@ import rx.js.Disposable
 /**
  * Created by svd on 10/01/2014.
  */
-class InterestTableColumn(val property: String, val interest: Interest, val renderer: (Interest) -> EntityRendererEditor = { PropertyRendererEditor.bestFor(it, property) }, val headerRenderer: HeaderRenderer = HeaderRenderer(interest, property))
+class InterestTableColumn(val property: String, val interest: Interest, val renderer: (Interest) -> EntityRendererEditor<*> = { PropertyRendererEditor.bestFor(it, property) }, val headerRenderer: HeaderRenderer = HeaderRenderer(interest, property))
 
 class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
+    var tableBody: TableBody? = null
     val columns: MutableMap<String, InterestTableColumn> = HashMap()
     val colorder: MutableList<String> = ArrayList()
     private val selection : MutableSet<Long> = HashSet()
     public  val selected : Set<Long> get() = selection
     val selector : Subject<Iterable<Long>> = Subject()
     var offset : Int = interest.offset
+    var committer : Boolean = false
+      set(v) {
+          $committer = v
+          if(v) {
+              colorder.add("commit")
+              columns["commit"] = InterestTableColumn("commit", interest, {CommitRenderer(interest)})
+          }
+      }
 
+
+    fun addActions(name:String="Actions", init:(Interest)->ActionListRenderer) {
+        colorder.add(name)
+        columns[name] = InterestTableColumn(name, interest, init)
+    }
+
+    fun createColumns() {
+        colorder.forEach {
+            val c = it
+            columns[it] = InterestTableColumn(it, interest, {PropertyRendererEditor.bestFor(it, c)})
+        }
+    }
+
+    fun label(col:String, label:String) {
+        columns[col]?.headerRenderer?.label = label
+    }
 
     fun onSelection(cb:(Iterable<Long>)->Unit) : Disposable = selector.subscribe(cb)
+    fun setSelection(sel:Iterable<Long>) {
+        val nsel = setOf(sel)
+        if(nsel.same(selection)) return
+        selection.clear()
+
+        selection.addAll(sel)
+        tableBody?.rows?.forEach {
+            val de = it.data("entity")
+            if(de !=null) {
+                val aid = safeParseInt(de) as Long
+                if(sel.any { it==aid }) it.addClass("selected")
+                else it.removeClass("selected")
+            } else it.removeClass("selected")
+        }
+        selector.onNext(selection)
+    }
 
     fun reduce(cols: Set<String>) = columns.keySet().filter { it !in cols }.forEach { columns.remove(it) }
 
-    override fun node(): HTMLDivElement {
-        val root = Div()
+    override fun initialise(n: HTMLDivElement) {
+        val root = this
         val that = this
         root.table {
             header {
@@ -48,6 +89,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                 }
             }
             body {
+                that.tableBody = this
                 val body = this
                 that.interest.on {
                     var rows = body.rows
@@ -55,7 +97,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                         is InterestOrderEvent -> {
                             val event = it
                             if (rows.size() > it.order.size) {
-                                //console.log("order sz: ${it.order.size} < ${rows.size()} removing: ${it.order.size}..${(rows.size() - 1)}")
+                                console.log("order sz: ${it.order.size} < ${rows.size()} removing: ${it.order.size}..${(rows.size() - 1)}")
                                 for (i in (rows.size() - 1) to it.order.size) {
                                     //console.log("dead wood $i")
                                     body.remove(i)
@@ -69,6 +111,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                         val tr = this
                                         data("order", "$idx")
                                         on("click") {
+                                            val oldsel = HashSet<Long>()
+                                            oldsel.addAll(that.selection)
                                             val e = it as MouseEvent
                                             val ord = tr.data("order")
                                             if(ord!=null) {
@@ -95,6 +139,9 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                                         }
                                                     }
                                                 }
+                                                console.log("selection now: ${that.selection}")
+
+                                                if(!oldsel.same(that.selected))
                                                 that.selector.onNext(that.selection)
                                             }
 
@@ -103,7 +150,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                             tr.td {
                                                 val entity = event.interest[idx]
                                                 val ar = it.renderer(event.interest)
-                                                if (ar is EntityRendererEditor)
+                                                if (ar is EntityRendererEditor<*>)
                                                     ar.entity = entity
                                                 renderer = ar
                                             }
@@ -121,7 +168,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                     row.cells.forEach {
                                         val r = it.renderer
                                         when(r ) {
-                                            is EntityRendererEditor -> if (r.entity?.id != entity?.id) r.entity = entity else r.update()
+                                            is EntityRendererEditor<*> -> if (r.entity?.id != entity?.id) r.entity = entity else r.update()
                                             else -> r?.update()
                                         }
                                     }
@@ -134,8 +181,9 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                             val row = body.rows[idx]
                             row.cells.forEach {
                                 val cr = it.renderer
-                                if (cr is EntityRendererEditor) {
+                                if (cr is EntityRendererEditor<*>) {
                                     cr.entity = event.entity
+                                    cr.update()
                                 }
                             }
                             row.show("table-row")
@@ -148,7 +196,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                             val e = it as InterestUpdateEvent
                             row.cells.forEach {
                                 val r = it.renderer
-                                if (r is EntityRendererEditor) {
+                                if (r is EntityRendererEditor<*>) {
                                     if (r.wants(e)) r.update()
                                 }
                             }
@@ -167,15 +215,13 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         }
 
         root + Pager(interest)
-
-        return root.root
     }
 }
 
 class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
-    override fun node(): HTMLDivElement {
-        val d = Div();
+    override fun initialise(n: HTMLDivElement) {
+        val d = this
         val that = this
         d.addClass("pager")
         val first = d.anchor {
@@ -198,11 +244,12 @@ class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component
             addClass("next")
             enabled(false)
             on("click") {
+                console.log("NEXT")
                 that.interest.next()
             }
         }
 
-        val cfg = d.anchor {
+        d.anchor {
             addClass("cfg")
             on("click") {
                 d.input {
@@ -219,7 +266,7 @@ class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component
             }
         }
 
-        val filter =d.labelledInput("Filter:") {
+        d.labelledInput("Filter:") {
             val ti = this
             console.log(ti)
             ti.on("change").subscribe {
@@ -235,14 +282,15 @@ class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component
 
         interest.on {
             if (it is InterestConfigEvent) {
+                console.log("UPDATE PAGER")
                 update(first, prev, next)
             }
         }
 
-        return d.root
     }
 
     fun filter(ti:TextInput) {
+        if(ti.value.isEmpty()) return
         try {
             val f = APP?.filterParser?.parse(ti.value)!! as Json
             ti.removeClass("error")
@@ -263,7 +311,7 @@ class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component
         else {
             disable(first); disable(prev)
         }
-        if (interest.offset + interest.limit < interest.size)
+        if (interest.estimated>interest.size)
             enable(next)
         else disable(next)
     }

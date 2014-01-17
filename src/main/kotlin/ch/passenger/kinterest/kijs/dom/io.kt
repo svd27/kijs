@@ -48,7 +48,7 @@ class Ajax(val url:String, val method:String="GET") {
         return s
     }
 
-    fun open() = req.open(method, url)
+    fun open() {if(method=="GET") req.open(method, url+"?cache="+Date().getTime()) else req.open(method, url)}
     fun start() {
         open()
         req.send()

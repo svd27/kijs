@@ -37,11 +37,12 @@ import ch.passenger.kinterest.kijs.ui.EntityEditor
  * Created by svd on 13/01/2014.
  */
 class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
-    val cols = listOf("email", "nick", "birthdate", "editor")
-    val labels = mapOf("email" to "Email", "nick" to "Nickname", "birthdate" to "Born", "editor" to "Editor")
+    val cols = listOf("email", "nick", "birthdate", "editor", "buddies")
+    val labels = mapOf("email" to "Email", "nick" to "Nickname", "birthdate" to "Born", "editor" to "Editor", "buddies" to "Friends")
     var interest : Interest? = null
     var table : InterestTable? = null
     var detail : GenericEntityEditor? = null
+    var currentFocus : Entity? = null
 
 
     override fun readyState(): Boolean = false
@@ -49,6 +50,7 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     override fun initialise(n: HTMLDivElement) {
         val d = this
         val that = this
+
 
         ALL.galaxies["DiaryOwner"]!!.create("owneroverview") {
             that.table=InterestTable(it)
@@ -60,6 +62,7 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
             that.labels.keySet().forEach {
                 that.table?.label(it, that.labels[it]!!)
             }
+
             that.table?.addActions {
                 val r = ActionListRenderer(it)
 
@@ -75,6 +78,57 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
                         console.log(that.detail?:"???")
                         that.detail?.entity = entity
                         that.detail?.show()
+                    }
+                })
+                r.addAction(object : ActionComponent(it) {
+                    override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
+
+                    override fun init() {
+                        addClasses("focus")
+                    }
+                    override fun invoke(e: Event) {
+                        that.currentFocus = entity
+                        console.log("focusing on ${entity?.id}")
+                        update()
+                    }
+
+
+                    override fun update() {
+                        super<ActionComponent>.update()
+                        that.table?.tableBody!!.rows.forEach {
+                            it.removeClass("focus")
+                            if(that.currentFocus!=null && it.data("entity") == "${that.currentFocus?.id}") {
+                                it.addClass("focus")
+                            }
+                        }
+                    }
+                })
+
+                r.addAction(object : ActionComponent(it) {
+                    override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
+
+                    override fun init() {
+                        addClasses("friend")
+                    }
+                    override fun invoke(e: Event) {
+                        if(that.currentFocus!=null && entity!=null) {
+                            val en = that.currentFocus!!.descriptor.entity
+                            ALL.galaxies[en]!!.addRelation(that.currentFocus!!, "buddies", entity!!.id)
+                        }
+                    }
+                })
+
+                r.addAction(object : ActionComponent(it) {
+                    override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
+
+                    override fun init() {
+                        addClasses("unfriend")
+                    }
+                    override fun invoke(e: Event) {
+                        if(that.currentFocus!=null && entity!=null) {
+                            val en = that.currentFocus!!.descriptor.entity
+                            ALL.galaxies[en]!!.removeRelation(that.currentFocus!!, "buddies", entity!!.id)
+                        }
                     }
                 })
                 r

@@ -38,10 +38,11 @@ public class PropertyDescriptor(json:Json) {
     val unique : Boolean = json.get("unique") as Boolean
     val readonly : Boolean = json.get("readonly") as Boolean
     val relation : Boolean = json.get("relation") as Boolean
+    val oneToMany : Boolean = json.get("oneToMany") as Boolean
     val nullable : Boolean = json.get("nullable") as Boolean
     val label : Boolean = json.get("label") as Boolean
-    val datatype : String = if(relation) "" else json.get("type") as String
-    val entity : String = if(relation) json.get("entity") as String else ""
+    val datatype : String = if(relation || oneToMany) "" else json.get("type") as String
+    val entity : String = if(relation || oneToMany) json.get("entity") as String else ""
     val scalars : Set<String> = setOf("long", "int",  "short", "byte", "char")
     val floats : Set<String> = setOf("double", "float")
     val dates : Set<String> = setOf("java.util.Date", "org.joda.DateTime", "org.joda.time.LocalDate")
@@ -54,7 +55,8 @@ public class PropertyDescriptor(json:Json) {
     fun cast(v:Any?) : Any? {
         if(!nullable && v == null) throw Exception("$property is not nullabel")
         if(v==null) return null
-        if(relation) {
+
+        if(relation || oneToMany) {
             return toInt(v)
         }
 
@@ -178,6 +180,16 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
         _state = EntityState.DELETED
     }
 
+    fun related(p:String) {
+        val c = values[p] as Int?
+        values[p] = c?:0+1
+    }
+
+    fun unrelated(p:String) {
+        val c = values[p] as Int?
+        values[p] = c?:0-1
+    }
+
     fun hasProperty(p:String) : Boolean = descriptor.properties.containsKey(p)
 
     public fun equals(o:Any?) : Boolean {
@@ -284,9 +296,15 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
             val ue = e as ServerEntityUpdateEvent
             val e = heaven[ue.id]
             if(e is Entity) {
-                e.update(ue)
-                interests.values().forEach {
-                    it.updated(e, ue.property, ue.old)
+                val pd = descriptor.properties[ue.property]
+                if(pd!=null && pd.oneToMany) {
+                    if(ue.value!=null) ALL.galaxies[pd.entity]!!.relationAdded(e, ue.property, ue.value as Long)
+                    else ALL.galaxies[pd.entity]!!.relationRemoved(e, ue.property, ue.value as Long)
+                } else {
+                    e.update(ue)
+                    interests.values().forEach {
+                        it.updated(e, ue.property, ue.old)
+                    }
                 }
             }
         }
@@ -296,6 +314,24 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
         interests.values().forEach {
             it.updated(entity, property, old)
         }
+    }
+
+    fun relationAdded(source:Entity, relation:String, added:Long) {
+        source.related(relation)
+    }
+
+    fun relationRemoved(source:Entity, relation:String, added:Long) {
+        source.unrelated(relation)
+    }
+
+    fun addRelation(source:Entity, property:String, add:Long) {
+        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/add/$add", "GET")
+        req.start()
+    }
+
+    fun removeRelation(source:Entity, property:String, rem:Long) {
+        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/remove/$rem", "GET")
+        req.start()
     }
 
     val relations : MutableMap<String,Interest> = HashMap()
@@ -364,6 +400,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     var estimated : Int = 0
     val orderBy : MutableList<SortKey> = ArrayList()
 
+
     fun sort(keys:Array<SortKey>) {
         val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/orderBy", "POST")
         val js = Array<Json>(keys.size) {
@@ -394,6 +431,11 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
 
     fun filter(f:Filter) {
         filterJson(f.json)
+    }
+
+    fun refresh() {
+        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/refresh", "GET")
+        req.start()
     }
 
     fun filterJson(f:Json) {

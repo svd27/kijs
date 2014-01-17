@@ -300,5 +300,24 @@ dd {
   content: "\f044";
 }
 
+.actions .action.focus:before {
+  font-family: 'FontAwesome';
+  content: "\f041";
+}
+
+.actions .action.friend:before {
+  font-family: 'FontAwesome';
+  content: "\f0c1";
+}
+
+.actions .action.unfriend:before {
+  font-family: 'FontAwesome';
+  content: "\f127";
+}
+
+tr.focus td .email {
+  background-color: green;
+}
+
 
 

@@ -12,17 +12,22 @@ native val Rx : RxFactory = js.noImpl
 
 native class RxFactory {
     public native val Observable : ObservableFactory = js.noImpl
+    public native val Observer : ObserverFactory = js.noImpl
     public native fun<T> Subject() : Subject<T> = js.noImpl
     //public native fun<T> AsyncSubject() : Subject<T> = js.noImpl
+}
+
+native class ObserverFactory {
+    fun<T> create(n:(T)->Unit, err:(Exception)->Unit, c:()->Unit) : Observer<T> = js.noImpl
 }
 
 
 public open native("Rx.Subject") class Subject<T>() : Observer<T>, Observable<T> {
     override fun subscribe(obs: Observer<T>): Disposable = js.noImpl
     override fun subscribe(cb: (T) -> Unit): Disposable = js.noImpl
-    override fun onNext(t: T) : Unit = js.noImpl
-    override fun onCompleted() : Unit = js.noImpl
-    override fun onError(error: Exception) : Unit  = js.noImpl
+    fun onNext(t: T) : Unit = js.noImpl
+    fun onCompleted() : Unit = js.noImpl
+    fun onError(error: Exception) : Unit  = js.noImpl
     override fun<U> select(cb:(T)->U) : Observable<U> = js.noImpl
     override fun where(cb:(T)->Boolean) : Observable<T> = js.noImpl
     override fun throttle(ms:Long) : Observable<T> = js.noImpl
@@ -50,11 +55,11 @@ native trait Observable<T> {
     fun throttle(ms:Long) : Observable<T>
     fun distinctUntilChanged() : Observable<T>
     fun bufferWithTimeOrCount(timeSpan:Long, count:Int) : Observable<Array<T>>
+    fun subscribe(cb:(T)->Unit, err:(Exception)->Unit, complete:()->Unit={}) : Disposable {
+        return subscribe(Rx.Observer.create(cb, err, complete))
+    }
 }
 
 native trait Observer<T> {
-    native fun onNext(t:T)
-    native fun onCompleted()
-    native fun onError(error:Exception)
 }
 

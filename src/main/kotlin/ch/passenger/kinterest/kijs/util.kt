@@ -39,6 +39,7 @@ fun<T> Array<T>.filter(cb: (T)->Boolean) : Iterable<T> {
 }
 
 fun<T> Array<T>.contains(t:T) :Boolean = any { it==t }
+fun<T> Iterable<T>.contains(t:T) :Boolean = any { it==t }
 
 fun<T> Array<T>.indexOf(t:T) : Int {
     for(i in 0..(size-1)) if(get(i)==t) return i
@@ -229,7 +230,11 @@ fun NodeList.filter(cb:(Node)->Boolean) : Iterable<Node> {
 }
 
 fun NodeList.forEach(cb:(Node)->Unit) {
-    for(i in 0..(this.length-1)) cb(item(i))
+    var i = 0
+    while(i<length) {
+        cb(item(i))
+        i++
+    }
 }
 
 fun NodeList.any(cb:(Node)->Boolean) : Boolean {

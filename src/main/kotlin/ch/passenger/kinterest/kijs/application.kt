@@ -25,6 +25,8 @@ import ch.passenger.kinterest.kijs.ui.Tabber
 import ch.passenger.kinterest.kijs.ui.Tab
 import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.diaries.OverviewPanel
+import ch.passenger.kinterest.kijs.style.CSSExporter
+import ch.passenger.kinterest.kijs.style.StyleManagerView
 
 /**
  * Created by svd on 07/01/2014.
@@ -154,11 +156,13 @@ class DiariesApp(base:String) : Application(base) {
         val menu = UniverseMenu(ALL)
         val bl = document.getElementsByTagName("body")
         val root = Div(appname)
-        val tabber = Tabber("mouseenter")
+        val tabber = Tabber("click")
         val ex = OverviewPanel()
 
         tabber.addTab(Tab(Span{textContent="Universe"}, menu))
         tabber.addTab(Tab(Span{textContent="Example"}, ex))
+        tabber.addTab(Tab(Span{textContent="CSS Sheets"}, StyleManagerView()))
+        tabber.addTab(Tab(Span{textContent="CSS"}, CSSExporter()))
         root + tabber
         bl.item(0).appendChild(root.root)
     }

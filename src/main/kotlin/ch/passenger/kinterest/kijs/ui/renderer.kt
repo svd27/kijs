@@ -331,6 +331,7 @@ open class PropertyRendererEditor(val property: String, intererst: Interest, cre
 
     class object {
         fun bestFor(interest: Interest, property: String, creator:Boolean=false): PropertyRendererEditor {
+            console.log("BEST $property")
             val pd = interest.galaxy.descriptor.properties[property]!!
             if (pd.scalar) return IntegerRenderEdit(property, interest, creator)
             if (pd.floaty) return NumberRenderEdit(property, interest, creator)

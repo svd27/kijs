@@ -34,6 +34,7 @@ class Ajax(val url:String, val method:String="GET") {
         console.log(s)
         val target = req as EventSource
         target.addEventListener("load") {
+            console.log("RESP: ${req.responseText}")
             s.onNext(req.responseText)
         };
 
@@ -47,6 +48,8 @@ class Ajax(val url:String, val method:String="GET") {
         //start()
         return s
     }
+
+
 
     fun open() {if(method=="GET") req.open(method, url+"?cache="+Date().getTime()) else req.open(method, url)}
     fun start() {

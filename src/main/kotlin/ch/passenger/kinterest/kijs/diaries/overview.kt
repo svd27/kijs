@@ -32,17 +32,26 @@ import ch.passenger.kinterest.kijs.ui.TextAreaEdit
 import ch.passenger.kinterest.kijs.ui.CommitRenderer
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.ui.EntityEditor
+import ch.passenger.kinterest.kijs.ui.Span
+import ch.passenger.kinterest.kijs.none
+import ch.passenger.kinterest.kijs.*
+import js.dom.html.CSSRule
+import js.dom.html.document
+import js.dom.html.CSSStyleDeclaration
+import ch.passenger.kinterest.kijs.dom.*
 
 /**
  * Created by svd on 13/01/2014.
  */
 class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
-    val cols = listOf("email", "nick", "birthdate", "editor", "buddies")
-    val labels = mapOf("email" to "Email", "nick" to "Nickname", "birthdate" to "Born", "editor" to "Editor", "buddies" to "Friends")
+    val cols = listOf("email", "nick", "birthdate", "editor", "buddies", "state")
+    val labels = mapOf("state" to "ONLINE", "email" to "Email", "nick" to "Nickname", "birthdate" to "Born", "editor" to "Editor", "buddies" to "Friends")
     var interest : Interest? = null
     var table : InterestTable? = null
+    var buddies : InterestTable? = null
     var detail : GenericEntityEditor? = null
     var currentFocus : Entity? = null
+    val focusHeader : Span = Span() {textContent = "---"}
 
 
     override fun readyState(): Boolean = false
@@ -95,10 +104,30 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
                     override fun update() {
                         super<ActionComponent>.update()
+                        if(that.currentFocus==null) {
+                            that.focusHeader.textContent = "---"
+                            that.table?.tableBody!!.rows.forEach {
+                                it.removeClass("focus")
+                            }
+                            return
+                        }
+                        if(that.currentFocus?.id!=entity?.id) return
+                        that.focusHeader.textContent = that.currentFocus!!["nick"]?.toString()?:"???"
                         that.table?.tableBody!!.rows.forEach {
                             it.removeClass("focus")
                             if(that.currentFocus!=null && it.data("entity") == "${that.currentFocus?.id}") {
                                 it.addClass("focus")
+                            }
+                        }
+                        val bt = that.buddies
+                        if(bt!=null) {
+                            if(that.currentFocus!=null) {
+                                val fs = "DiaryOwner.buddies <- id = ${that.currentFocus!!.id}"
+                                console.log("buddy filter: fs")
+                                bt.interest.filterJson(APP!!.filterParser!!.parse<Json>(fs)!!)
+                            } else {
+                                val fs = "id < 0"
+                                bt.interest.filterJson(APP!!.filterParser!!.parse<Json>(fs)!!)
                             }
                         }
                     }
@@ -145,8 +174,22 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
             it.sort(array(SortKey("nick", SortDirection.ASC)))
             it.buffer(0, 5)
             it.filterJson(APP!!.filterParser!!.parse<Json>("id >= 0")!!)
-            it
+            ALL.galaxies["DiaryOwner"]!!.create("buddies") {
+                that.buddies = InterestTable(it)
+
+                that.buddies!!.colorder.addAll(listOf("nick", "email", "birthdate"))
+                that.buddies!!.createColumns()
+                that.labels.keySet().forEach {
+                    that.table?.label(it, that.labels[it]!!)
+                }
+                d+that.focusHeader
+                d+that.buddies!!
+                it.buffer(0, 5)
+                it.sort(array(SortKey("nick", SortDirection.ASC)))
+            }
         }
+
+
     }
 }
 
@@ -314,6 +357,7 @@ class EntryEditor(interest:Interest, id:String=BaseComponent.id()) : EntityEdito
 class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     var diaries : Boolean = false
     var entries : Boolean = false
+    val lastOwners : MutableList<Long> = ArrayList()
     override fun initialise(n: HTMLDivElement) {
         val d = this
         val ownerView = OwnerView()
@@ -331,14 +375,20 @@ class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id
                         d.entries = true
 
                         diaries.table!!.onSelection {
-                            val f = it.map { "diary -> id = $it" }.makeString(" or ")
-                            if(f.size>0) {
-                                val fj = APP!!.filterParser!!.parse<Json>(f)
-                                fj?.set("entity", "DiaryEntry")
-                                val i = entryPane.table!!.interest
-                                if(fj!=null) {
-                                    console.log("Filtering Entries ... $f")
-                                    i.filterJson(fj)
+                            val sel = it
+                            val chg = lastOwners.any { !sel.contains(it) }
+                            if (chg) {
+                                lastOwners.clear()
+                                lastOwners.addAll(sel)
+                                val f = it.map { "diary -> id = $it" }.makeString(" or ")
+                                if(f.size>0) {
+                                    val fj = APP!!.filterParser!!.parse<Json>(f)
+                                    fj?.set("entity", "DiaryEntry")
+                                    val i = entryPane.table!!.interest
+                                    if(fj!=null) {
+                                        console.log("Filtering Entries ... $f")
+                                        i.filterJson(fj)
+                                    }
                                 }
                             }
                         }
@@ -362,9 +412,29 @@ class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id
                         if(fj!=null && i!=null) i.filterJson(fj)
                     }
                 }
-            }
+                d.anchor {
+                    textContent = "CSS"
+                    click {
+                        val ev = it
+                        for (i in (0..document.styleSheets.length - 1)) {
+                            val ss = document.styleSheets.item(i)
+                            console.log(ss.href)
+                            if (ss.href.endsWith("base.css")) {
+                                ss.cssRules.forEach {
 
-        }
+                                    if(it.`type`==1) {
+                                        val sr = it as CSSStyleRule
+                                        console.log(sr.selectorText)
+                                        console.log(sr.style.cssText)
+                                    } else console.log(it)
+                                }
+
+                            }
+                        }
+                    }
+
+                }
     }
 }
-
+    }
+}

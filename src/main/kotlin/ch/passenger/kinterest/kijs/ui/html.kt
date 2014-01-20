@@ -75,6 +75,7 @@ trait BaseComponent<T : Element> : Disposable{
 
     public fun att(name: String): String = root.getAttribute(name)
     public fun att(name: String, value: String): Unit = root.setAttribute(name, value)
+    public fun hasAtt(name:String) : Boolean = root.hasAttribute(name)
 
     public fun removeAtt(name: String): Unit = root.removeAttribute(name)
 
@@ -104,12 +105,18 @@ trait BaseComponent<T : Element> : Disposable{
         if (root.parentNode != null) {
             root.parentNode.removeChild(root)
         }
+        dispose()
     }
 
     fun removeChildren() {
         //if nodelist is live collection removing will change it
         //so map just copies first then deletes
         root.childNodes.map { it }.forEach { it.parentNode.removeChild(it) }
+    }
+
+    override fun dispose() {
+        disposables.forEach { it.dispose() }
+        disposables.clear()
     }
 
     var textContent: String
@@ -137,9 +144,7 @@ open class Tag<T : HTMLElement>(val name: String, val id: String = BaseComponent
         }
 
 
-    override fun dispose() {
-        disposables.forEach { it.dispose() }
-    }
+
     override val disposables: MutableSet<Disposable> = HashSet()
 
     override final fun node(): T {
@@ -187,19 +192,9 @@ open class Tag<T : HTMLElement>(val name: String, val id: String = BaseComponent
     }
 }
 
-abstract class FlowContainer<T : HTMLElement>(name: String, id: String) : Tag<T>(name, id) {
-    fun div(id: String = BaseComponent.id(), init: Div.() -> Unit): Div {
-        val d = Div(id)
-        d.init()
-        return plus(d)
-    }
-
+abstract class PhraseContainer<T : HTMLElement>(name: String, id: String) : Tag<T>(name, id) {
     fun span(id: String = BaseComponent.id(), init: Span.() -> Unit): Span {
         return this + Span(id, init)
-    }
-
-    fun dl(id: String = BaseComponent.id(), init: DL.() -> Unit): DL {
-        return this + DL(id, init)
     }
 
     fun button(id: String = BaseComponent.id(), init: Button.() -> Unit): Button {
@@ -220,19 +215,10 @@ abstract class FlowContainer<T : HTMLElement>(name: String, id: String) : Tag<T>
         return plus(ti)
     }
 
-    fun table(id: String = BaseComponent.id(), init: Table.() -> Unit): Table {
-        val tbl = Table(id)
-        return add(tbl, init)
-    }
-
-    fun select(id: String = BaseComponent.id(), init: SelectOne.() -> Unit): SelectOne {
-        val sel = SelectOne(id)
-        return add(sel, init)
-    }
-
-    fun datalist(id: String = BaseComponent.id(), init: DataList.() -> Unit): DataList {
-        val sel = DataList(id)
-        return add(sel, init)
+    fun checkbox(id: String = BaseComponent.id(), init: CheckBox.() -> Unit): CheckBox {
+        val ti = CheckBox(id)
+        ti.init()
+        return plus(ti)
     }
 
     fun label(id: String = BaseComponent.id(), init: Label.() -> Unit): Label {
@@ -252,11 +238,44 @@ abstract class FlowContainer<T : HTMLElement>(name: String, id: String) : Tag<T>
         return labelled(lbl, id, ti, init)
     }
 
+    fun select(id: String = BaseComponent.id(), init: SelectOne.() -> Unit): SelectOne {
+        val sel = SelectOne(id)
+        return add(sel, init)
+    }
     fun textarea(content:String, id:String = BaseComponent.id(), init:TextArea.()->Unit) : TextArea {
         val ta = TextArea()
         ta.textContent = content
         return add(ta, init)
     }
+
+}
+
+abstract class FlowContainer<T : HTMLElement>(name: String, id: String) : PhraseContainer<T>(name, id) {
+    fun div(id: String = BaseComponent.id(), init: Div.() -> Unit): Div {
+        val d = Div(id)
+        d.init()
+        return plus(d)
+    }
+
+
+    fun dl(id: String = BaseComponent.id(), init: DL.() -> Unit): DL {
+        return this + DL(id, init)
+    }
+
+
+    fun table(id: String = BaseComponent.id(), init: Table.() -> Unit): Table {
+        val tbl = Table(id)
+        return add(tbl, init)
+    }
+
+
+
+    fun datalist(id: String = BaseComponent.id(), init: DataList.() -> Unit): DataList {
+        val sel = DataList(id)
+        return add(sel, init)
+    }
+
+
 }
 
 class Div(id: String = BaseComponent.id()) : FlowContainer<HTMLDivElement>("div", id)
@@ -320,6 +339,14 @@ open class IntegerInput(id: String = BaseComponent.id()) : NumberInput(id) {
     }
 }
 
+open class CheckBox(id : String = BaseComponent.id()) : Input("checkbox", id) {
+    var checked : Boolean
+      get() = root.checked
+      set(v) {
+          root.checked = v
+      }
+}
+
 class IButton(id: String = BaseComponent.id()) : Input("button", id)
 
 class Icon(id: String = BaseComponent.id()) : Tag<HTMLElement>("i", id)
@@ -361,6 +388,14 @@ open class Select(id: String = BaseComponent.id()) : Tag<HTMLSelectElement>("sel
         o.value = value
         o.init()
         return plus(o)
+    }
+
+    public fun contains(v:String) : Boolean {
+        var fl = false
+        root.options.forEach {
+            fl = fl || it.value == v
+        }
+        return fl
     }
 }
 

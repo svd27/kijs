@@ -21,6 +21,9 @@ import rx.js.Disposable
 import moments.Moment
 import ch.passenger.kinterest.kijs.all
 import java.util.HashSet
+import rx.js.Observer
+import rx.js.RxFactory
+import rx.js.Rx
 
 /**
  * Created by svd on 07/01/2014.
@@ -181,13 +184,21 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
     }
 
     fun related(p:String) {
+        val pd = descriptor.properties[p]
+        if(!(pd?.oneToMany?:false)) throw IllegalArgumentException()
         val c = values[p] as Int?
         values[p] = c?:0+1
+        ALL.galaxies[descriptor.entity]?.updated(this, p, values[p])
+        updateHook(this)
     }
 
     fun unrelated(p:String) {
+        val pd = descriptor.properties[p]
+        if(!(pd?.oneToMany?:false)) throw IllegalArgumentException()
         val c = values[p] as Int?
         values[p] = c?:0-1
+        ALL.galaxies[descriptor.entity]?.updated(this, p, values[p])
+        updateHook(this)
     }
 
     fun hasProperty(p:String) : Boolean = descriptor.properties.containsKey(p)
@@ -235,7 +246,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
 
     fun dretrieve(ids:Array<Long>) {
         val list = ArrayList<Long>()
-        ids.filter { !retrieving.contains(it) }.forEach { retrieving.add(it); list.add(it) }
+        ids.filter { !retrieving.contains(it) }.forEach { retrieving.add(it); if(!list.contains(it)) list.add(it) }
 
         if(list.size()>0) {
         val req = Ajax("http://${APP!!.base}/${descriptor.entity}/retrieve", "POST")
@@ -273,12 +284,32 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
         req.start(JSON.stringify(json))
     }
 
-    fun createEntity(e:Entity) {
+    fun createEntity(e: Entity, cb: (Long?) -> Unit = { }) {
         val req = Ajax("http://${APP!!.base}/${descriptor.entity}/createEntity", "POST")
-
+        req.asObservabe().subscribe({
+            val js = JSON.parse<Json>(it)
+            val ok = js.get("response")
+            if ("ok" == ok) {
+                val id = js.get("id") as String?
+                if (id != null) {
+                    cb(safeParseInt(id) as Long)
+                } else cb(null)
+            } else cb(null)
+        },
+                {
+                    cb(null)
+                })
         val json = e.collect()
         e.revert()
         req.start(JSON.stringify(json))
+    }
+
+    fun call(target:Long, action:String, args:Array<Any?>, cb:(String)->Unit, err:(Exception)->Unit={console.error(it)})  {
+        console.log("CALL: $target.$action")
+        val pars = JSON.stringify(args)
+        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${target}/action/$action", "POST")
+        req.asObservabe().subscribe(Rx.Observer.create<String>(cb, err, {}))
+        req.start(pars)
     }
 
     fun get(id:Long) : Entity = if(id in heaven.keySet()) heaven[id]!! else {subRetriever.onNext(id); NOTLOADED; }
@@ -298,6 +329,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
             if(e is Entity) {
                 val pd = descriptor.properties[ue.property]
                 if(pd!=null && pd.oneToMany) {
+                    console.log("RELATION UPDATE ${pd.property}:${pd.entity}")
                     if(ue.value!=null) ALL.galaxies[pd.entity]!!.relationAdded(e, ue.property, ue.value as Long)
                     else ALL.galaxies[pd.entity]!!.relationRemoved(e, ue.property, ue.value as Long)
                 } else {

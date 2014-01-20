@@ -28,7 +28,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
           $committer = v
           if(v) {
               colorder.add("commit")
-              columns["commit"] = InterestTableColumn("commit", interest, {CommitRenderer(interest)})
+              val cr = {(it:Interest) -> console.log("COMMIT"); CommitRenderer(it)}
+              columns["commit"] = InterestTableColumn("commit", interest, cr)
           }
       }
 
@@ -41,6 +42,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
     fun createColumns() {
         colorder.forEach {
             val c = it
+            if(columns[it]==null)
             columns[it] = InterestTableColumn(it, interest, {PropertyRendererEditor.bestFor(it, c)})
         }
     }
@@ -146,7 +148,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                             }
 
                                         }
-                                        that.columns.values().forEach {
+                                        that.colorder.map {that.columns[it]}.notNulls().forEach {
                                             tr.td {
                                                 val entity = event.interest[idx]
                                                 val ar = it.renderer(event.interest)
@@ -178,6 +180,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                         is InterestLoadEvent -> {
                             val event = it as InterestLoadEvent
                             val idx = it.idx
+                            if(body.rows.size()>idx) {
                             val row = body.rows[idx]
                             row.cells.forEach {
                                 val cr = it.renderer
@@ -187,17 +190,20 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                 }
                             }
                             row.show("table-row")
+                            }
                         }
                         is InterestUpdateEvent -> {
                             //console.log("UPDATE...")
                             //console.log(it)
-                            val row = rows[it.idx]
-                            if (it.entity.dirty) row.addClass("dirty") else row.removeClass("dirty")
-                            val e = it as InterestUpdateEvent
-                            row.cells.forEach {
-                                val r = it.renderer
-                                if (r is EntityRendererEditor<*>) {
-                                    if (r.wants(e)) r.update()
+                            if (it.idx<rows.size()) {
+                                val row = rows[it.idx]
+                                if (it.entity.dirty) row.addClass("dirty") else row.removeClass("dirty")
+                                val e = it as InterestUpdateEvent
+                                row.cells.forEach {
+                                    val r = it.renderer
+                                    if (r is EntityRendererEditor<*>) {
+                                        if (r.wants(e)) r.update()
+                                    }
                                 }
                             }
                         }

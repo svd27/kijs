@@ -25,7 +25,8 @@ fun<T> Set<T>.same(os:Set<T>) : Boolean {
 }
 
 fun<T> MutableCollection<T>.addAll(it:Iterable<T>) {
-    it.forEach { add(it) }
+    val c = this
+    it.forEach { c.add(it) }
 }
 
 fun<T> Array<T>.forEach(cb: (T)->Unit) {

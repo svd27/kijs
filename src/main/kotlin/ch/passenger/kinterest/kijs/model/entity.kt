@@ -331,7 +331,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
                 if(pd!=null && pd.oneToMany) {
                     console.log("RELATION UPDATE ${pd.property}:${pd.entity}")
                     if(ue.value!=null) ALL.galaxies[pd.entity]!!.relationAdded(e, ue.property, ue.value as Long)
-                    else ALL.galaxies[pd.entity]!!.relationRemoved(e, ue.property, ue.value as Long)
+                    else ALL.galaxies[pd.entity]!!.relationRemoved(e, ue.property, ue.old as Long)
                 } else {
                     e.update(ue)
                     interests.values().forEach {
@@ -536,17 +536,21 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
             "INTEREST" -> cfg((ev as ServerInterestConfigEvent))
             "ADD" -> {
                 val ae = ev as ServerInterestAddEvent
-                val no = ArrayList<Long>()
-                no.addAll(order)
-                no.add(ae.id)
-                onOrder(no.copyToArray())
+                if(order.indexOf(ae.id)<0) {
+                  val no = ArrayList<Long>()
+                  no.addAll(order)
+                  no.add(ae.id)
+                  onOrder(no.copyToArray())
+                }
             }
             "REMOVE" -> {
-                val ae = ev as ServerInterestAddEvent
+                val ae = ev as ServerInterestRemoveEvent
+                if(order.indexOf(ae.id)>=0) {
                 val no = ArrayList<Long>()
                 no.addAll(order)
                 no.remove(ae.id)
                 onOrder(no.copyToArray())
+                }
             }
         }
     }

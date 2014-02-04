@@ -29,6 +29,7 @@ import ch.passenger.kinterest.kijs.model.Interest
 import ch.passenger.kinterest.kijs.dom.StyleSheet
 import ch.passenger.kinterest.kijs.dom.CSSStyleRule
 import ch.passenger.kinterest.kijs.model.EntityState
+import ch.passenger.kinterest.kijs.ui.Label
 
 /**
  * Created by svd on 19/01/2014.
@@ -39,12 +40,13 @@ class StyleManager(val esheet:Entity) {
     private val ruleMap : MutableMap<Long,Int> = HashMap();
     private var islive = false
     private var sheet :StyleSheet? = null
-    private var interest : Interest? = null
+    private var interest : Interest? = null;
 
     {
         val that = this
         ALL.galaxies["CSSProperty"]!!.create("${esheet["name"]}properties") {
             interest = it
+            it.eager = true
             it.on {
                 console.log("StyleManager ${it}")
                 val ev = it
@@ -147,6 +149,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
     private var sheetsTable : InterestTable? = null
     private var rulesTable : InterestTable? = null
     private var propertiesTable : InterestTable? = null
+    private var managedProperties : ManagedProperties? = null
 
     override fun initialise(n: HTMLDivElement) {
         super<Component>.initialise(n)
@@ -184,12 +187,23 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                     override fun invoke(e: Event) {
                         val e = entity
                         if(e==null) return
-                        val n = e["name"] as String
                         if(KIStyles.containsKey(e.id)) {
                             KIStyles[e.id]?.live()
                         }
                     }
                 })
+                al.addAction(object : ActionComponent(it) {
+                    {
+                        addClass("properties")
+                        root.textContent = "@"
+                    }
+                    override fun invoke(e: Event) {
+                        val e = entity
+                        if(e==null) return
+                        managedProperties!!.focus(e)
+                    }
+                })
+
                 al
             }
 
@@ -212,6 +226,10 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                         }
                     }
                 }
+            }
+            ALL.galaxies["CSSProperty"]!!.create("managedproperties") {
+                that.managedProperties = ManagedProperties(it)
+                that.plus(that.managedProperties!!)
             }
             stbl.onReady {
                 initRules()
@@ -269,7 +287,6 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                     that.propertiesTable!!.createColumns()
                     val stbl = that.rulesTable!!
                     stbl.onSelection {
-
                         var fs = "id < 0"
                         if(it.iterator().hasNext()) {
                             fs = it.map { "(id = $it)" }.makeString(" or ", "CSSStyleRule.properties <- (", ")")
@@ -282,5 +299,25 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                 }
             }
         }
+    }
+}
+
+class ManagedProperties(val interest:Interest, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+    val tbl = InterestTable(interest);
+    val lbl = Label();
+
+    {
+        this+lbl
+        this+tbl
+        tbl.colorder.addAll(listOf("name","value"))
+        tbl.label("name", "Name")
+        tbl.label("value", "Value")
+        tbl.createColumns()
+    }
+
+    fun focus(sheet:Entity) {
+        val f = APP!!.filterParser!!.parse<Json>("CSSStyleRule.properties <- CSSStylesheet.rules <- id = ${sheet.id}")!!
+        lbl.textContent = sheet["name"].toString()
+        interest.filterJson(f)
     }
 }

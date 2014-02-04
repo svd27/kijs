@@ -43,15 +43,15 @@ import ch.passenger.kinterest.kijs.dom.*
 /**
  * Created by svd on 13/01/2014.
  */
-class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     val cols = listOf("email", "nick", "birthdate", "editor", "buddies", "state")
     val labels = mapOf("state" to "ONLINE", "email" to "Email", "nick" to "Nickname", "birthdate" to "Born", "editor" to "Editor", "buddies" to "Friends")
-    var interest : Interest? = null
-    var table : InterestTable? = null
-    var buddies : InterestTable? = null
-    var detail : GenericEntityEditor? = null
-    var currentFocus : Entity? = null
-    val focusHeader : Span = Span() {textContent = "---"}
+    var interest: Interest? = null
+    var table: InterestTable? = null
+    var buddies: InterestTable? = null
+    var detail: GenericEntityEditor? = null
+    var currentFocus: Entity? = null
+    val focusHeader: Span = Span() { textContent = "---" }
 
 
     override fun readyState(): Boolean = false
@@ -62,7 +62,7 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
 
         ALL.galaxies["DiaryOwner"]!!.create("owneroverview") {
-            that.table=InterestTable(it)
+            that.table = InterestTable(it)
             that.interest = it
             that.iAmReady()
             that.table?.colorder?.clear()
@@ -104,24 +104,24 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
                     override fun update() {
                         super<ActionComponent>.update()
-                        if(that.currentFocus==null) {
+                        if (that.currentFocus == null) {
                             that.focusHeader.textContent = "---"
                             that.table?.tableBody!!.rows.forEach {
                                 it.removeClass("focus")
                             }
                             return
                         }
-                        if(that.currentFocus?.id!=entity?.id) return
+                        if (that.currentFocus?.id != entity?.id) return
                         that.focusHeader.textContent = that.currentFocus!!["nick"]?.toString()?:"???"
                         that.table?.tableBody!!.rows.forEach {
                             it.removeClass("focus")
-                            if(that.currentFocus!=null && it.data("entity") == "${that.currentFocus?.id}") {
+                            if (that.currentFocus != null && it.data("entity") == "${that.currentFocus?.id}") {
                                 it.addClass("focus")
                             }
                         }
                         val bt = that.buddies
-                        if(bt!=null) {
-                            if(that.currentFocus!=null) {
+                        if (bt != null) {
+                            if (that.currentFocus != null) {
                                 val fs = "DiaryOwner.buddies <- id = ${that.currentFocus!!.id}"
                                 console.log("buddy filter: fs")
                                 bt.interest.filterJson(APP!!.filterParser!!.parse<Json>(fs)!!)
@@ -140,7 +140,7 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
                         addClasses("friend")
                     }
                     override fun invoke(e: Event) {
-                        if(that.currentFocus!=null && entity!=null) {
+                        if (that.currentFocus != null && entity != null) {
                             val en = that.currentFocus!!.descriptor.entity
                             ALL.galaxies[en]!!.addRelation(that.currentFocus!!, "buddies", entity!!.id)
                         }
@@ -154,7 +154,7 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
                         addClasses("unfriend")
                     }
                     override fun invoke(e: Event) {
-                        if(that.currentFocus!=null && entity!=null) {
+                        if (that.currentFocus != null && entity != null) {
                             val en = that.currentFocus!!.descriptor.entity
                             ALL.galaxies[en]!!.removeRelation(that.currentFocus!!, "buddies", entity!!.id)
                         }
@@ -182,8 +182,8 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
                 that.labels.keySet().forEach {
                     that.table?.label(it, that.labels[it]!!)
                 }
-                d+that.focusHeader
-                d+that.buddies!!
+                d + that.focusHeader
+                d + that.buddies!!
                 it.buffer(0, 5)
                 it.sort(array(SortKey("nick", SortDirection.ASC)))
             }
@@ -193,12 +193,12 @@ class OwnerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     }
 }
 
-class Diaries(id:String= BaseComponent.id()) : Component<HTMLDivElement>(id) {
+class Diaries(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     val cols = listOf("title", "owner", "created")
     val labels = mapOf("title" to "Name", "owner" to "Owner", "created" to "Created")
-    var interest : Interest? = null
-    var table : InterestTable? = null
-    var creator : GenericEntityEditor? = null
+    var interest: Interest? = null
+    var table: InterestTable? = null
+    var creator: GenericEntityEditor? = null
 
 
     override fun readyState(): Boolean = false
@@ -208,7 +208,7 @@ class Diaries(id:String= BaseComponent.id()) : Component<HTMLDivElement>(id) {
         val that = this
 
         ALL.galaxies["Diary"]!!.create("diaries") {
-            that.table=InterestTable(it)
+            that.table = InterestTable(it)
             that.interest = it
             that.iAmReady()
             that.table?.colorder?.clear()
@@ -241,10 +241,10 @@ class Diaries(id:String= BaseComponent.id()) : Component<HTMLDivElement>(id) {
                     override fun invoke(e: Event) {
                         console.log("invoke create entry")
                         val s = that.table?.selected?.firstThat { true }
-                        if(s!=null) {
+                        if (s != null) {
                             val e = that.interest!!.entity(s)
                             val te = that.creator?.entity
-                            if(te!=null) te["diary"] = e.id
+                            if (te != null) te["diary"] = e.id
                         }
 
                         that.creator?.show()
@@ -255,7 +255,7 @@ class Diaries(id:String= BaseComponent.id()) : Component<HTMLDivElement>(id) {
             ALL.galaxies["DiaryEntry"]!!.create("creator") {
                 that.creator = GenericEntityEditor(it, true)
                 that.creator?.hide()
-                that.creator?.commitRenderer?.alwaysCancel=true
+                that.creator?.commitRenderer?.alwaysCancel = true
                 that.creator?.commitRenderer?.subject?.subscribe { that.creator?.hide() }
 
                 d.plus(that.table!!)
@@ -267,17 +267,17 @@ class Diaries(id:String= BaseComponent.id()) : Component<HTMLDivElement>(id) {
     }
 }
 
-class EntryPane(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+class EntryPane(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     val cols = listOf("title", "dated", "created")
     val labels = mapOf("title" to "Title", "dated" to "Date", "created" to "Created")
-    var table : InterestTable? = null
-    var editor : EntryEditor? = null
+    var table: InterestTable? = null
+    var editor: EntryEditor? = null
 
     override fun initialise(n: HTMLDivElement) {
         val that = this
 
         ALL.galaxies["DiaryEntry"]!!.create("entries") {
-            that.table=InterestTable(it)
+            that.table = InterestTable(it)
             that.editor = EntryEditor(it)
             that.editor?.hide()
             that.table?.colorder?.clear()
@@ -300,7 +300,7 @@ class EntryPane(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
         }
     }
 
-    fun actionList(ai:Interest, editor:EntryEditor) : ActionListRenderer {
+    fun actionList(ai: Interest, editor: EntryEditor): ActionListRenderer {
         val that = this
         val al = ActionListRenderer(ai)
         al.addAction(object : ActionComponent(ai) {
@@ -320,7 +320,7 @@ class EntryPane(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     }
 }
 
-class EntryEditor(interest:Interest, id:String=BaseComponent.id()) : EntityEditor<HTMLDivElement>(interest, id) {
+class EntryEditor(interest: Interest, id: String = BaseComponent.id()) : EntityEditor<HTMLDivElement>(interest, id) {
     val tae = TextAreaEdit("content", interest)
     val cr = CommitRenderer(interest, false)
 
@@ -329,18 +329,18 @@ class EntryEditor(interest:Interest, id:String=BaseComponent.id()) : EntityEdito
         tae.editorOnly = true
         tae.att("cols", "60")
         tae.att("rows", "5")
-        this+tae
+        this + tae
 
         cr.alwaysCancel = true
         disposables.add(cr.subject.subscribe { that.hide() })
-        this+ cr
+        this + cr
     }
 
-    fun select(e:Entity?) {
-        if(e!=null) console.log("$id Content: ${e["content"]}")
+    fun select(e: Entity?) {
+        if (e != null) console.log("$id Content: ${e["content"]}")
         entity = e
-        if(entity?.id==e?.id)
-          update()
+        if (entity?.id == e?.id)
+            update()
     }
 
 
@@ -354,14 +354,14 @@ class EntryEditor(interest:Interest, id:String=BaseComponent.id()) : EntityEdito
     }
 }
 
-class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
-    var diaries : Boolean = false
-    var entries : Boolean = false
-    val lastOwners : MutableList<Long> = ArrayList()
+class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
+    var diaries: Boolean = false
+    var entries: Boolean = false
+    val lastOwners: MutableList<Long> = ArrayList()
     override fun initialise(n: HTMLDivElement) {
         val d = this
         val ownerView = OwnerView()
-        d+ ownerView
+        d + ownerView
         ownerView.onReady {
             if (!d.diaries) {
                 d.diaries = true
@@ -376,16 +376,18 @@ class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id
 
                         diaries.table!!.onSelection {
                             val sel = it
-                            val chg = lastOwners.any { !sel.contains(it) }
+                            console.log("selected diary $sel")
+                            val chg = d.lastOwners.size()==0 || d.lastOwners.any { !sel.contains(it) }
+                            console.log("chg: $chg")
                             if (chg) {
-                                lastOwners.clear()
-                                lastOwners.addAll(sel)
+                                d.lastOwners.clear()
+                                d.lastOwners.addAll(sel)
                                 val f = it.map { "diary -> id = $it" }.makeString(" or ")
-                                if(f.size>0) {
+                                if (f.size > 0) {
                                     val fj = APP!!.filterParser!!.parse<Json>(f)
                                     fj?.set("entity", "DiaryEntry")
                                     val i = entryPane.table!!.interest
-                                    if(fj!=null) {
+                                    if (fj != null) {
                                         console.log("Filtering Entries ... $f")
                                         i.filterJson(fj)
                                     }
@@ -394,8 +396,8 @@ class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id
                         }
                     }
                 }
-                d+ diaries
-                d+entryPane
+                d + diaries
+                d + entryPane
 
                 ownerView.table!!.onSelection {
                     diaries.table?.setSelection(listOf())
@@ -403,38 +405,16 @@ class OverviewPanel(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id
                     val nf = APP!!.filterParser!!.parse<Json>(nofilter)!!
                     nf.set("entity", "DiaryEntry")
                     entryPane.table?.interest?.filterJson(nf)
-                    val f = it.map{ "(owner -> id = ${it})" }.makeString(" or ")
+                    val f = it.map { "(owner -> id = ${it})" }.makeString(" or ")
                     console.log("Diary filter: $f")
-                    if (f.size>0) {
+                    if (f.size > 0) {
                         val fj = APP!!.filterParser!!.parse<Json>(f)
                         fj?.set("entity", "Diary")
                         val i = diaries.table?.interest
-                        if(fj!=null && i!=null) i.filterJson(fj)
+                        if (fj != null && i != null) i.filterJson(fj)
                     }
                 }
-                d.anchor {
-                    textContent = "CSS"
-                    click {
-                        val ev = it
-                        for (i in (0..document.styleSheets.length - 1)) {
-                            val ss = document.styleSheets.item(i)
-                            console.log(ss.href)
-                            if (ss.href.endsWith("base.css")) {
-                                ss.cssRules.forEach {
-
-                                    if(it.`type`==1) {
-                                        val sr = it as CSSStyleRule
-                                        console.log(sr.selectorText)
-                                        console.log(sr.style.cssText)
-                                    } else console.log(it)
-                                }
-
-                            }
-                        }
-                    }
-
-                }
-    }
-}
+            }
+        }
     }
 }

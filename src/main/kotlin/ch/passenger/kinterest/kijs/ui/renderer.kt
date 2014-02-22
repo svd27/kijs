@@ -470,22 +470,24 @@ class TextAreaEdit(property: String, interest: Interest, creator:Boolean=false) 
 
 
 class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean = false) : PropertyRendererEditor(property, interest, creator) {
-    var completer : CustomCompleter = CustomCompleter(interest.galaxy, createProjections(), findLabel())
+    private var targetEntity : String = interest.galaxy.descriptor.properties[property]!!.entity
+    private var targetGalaxy : Galaxy = ALL.galaxies[targetEntity]!!
+    var completer : CustomCompleter = CustomCompleter(targetGalaxy, createProjections(), findLabel())
     private var adiv : Div = Div();
     {adiv.plus(completer); completer.silent = true}
     override fun editor() : Tag<out HTMLElement> = adiv
 
     fun createProjections(): Array<String> {
-        val pit = interest.galaxy.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
+        val pit = targetGalaxy.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
         val c = pit.count()
         val ait = pit.iterator()
         return Array<String>(c) { ait.next() }
     }
 
     fun findLabel(): String {
-        var lbl = interest.galaxy.descriptor.properties.values().firstThat { it.label }?.property
+        var lbl = targetGalaxy.descriptor.properties.values().firstThat { it.label }?.property
         if(lbl==null) {
-            lbl = interest.galaxy.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
+            lbl = targetGalaxy.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
         }
         if(lbl==null) lbl = "id"
         return lbl!!
@@ -495,7 +497,7 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
     val label : String;
 
     {
-        label = ALL.galaxies[pd.entity]!!.descriptor.properties.values().firstThat { it.label }?.property?:"";
+        label = targetGalaxy.descriptor.properties.values().firstThat { it.label }?.property?:"";
         console.log("label $label")
     }
 
@@ -539,7 +541,7 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
         if(e==null) return ""
         val v = e[property]
         if(v==null) return ""
-        val re = ALL.galaxies[pd.entity]!!.heaven[v]
+        val re = targetGalaxy.heaven[v]
         return re?.get(label)?.toString()?:"---"
     }
 }
@@ -553,7 +555,7 @@ class HeaderRenderer(val interest: Interest, val property: String, var label: St
         val that = this
         d.on("click") {
             val ev = it as MouseEvent
-            if (!ev.shiftKey) {
+            if (!ev.metaKey) {
                 if (that.sortable) {
                     val ex = that.interest.orderBy.firstThat { it.property == that.property }
                     if(ex is SortKey) {

@@ -177,7 +177,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             ALL.galaxies["DiaryOwner"]!!.create("buddies") {
                 that.buddies = InterestTable(it)
 
-                that.buddies!!.colorder.addAll(listOf("nick", "email", "birthdate"))
+                that.buddies!!.colorder.addAll(listOf("nick", "email", "birthdate", "state"))
                 that.buddies!!.createColumns()
                 that.labels.keySet().forEach {
                     that.table?.label(it, that.labels[it]!!)
@@ -195,7 +195,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
 
 class Diaries(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     val cols = listOf("title", "owner", "created")
-    val labels = mapOf("title" to "Name", "owner" to "Owner", "created" to "Created")
+    val labels = mapOf("title" to "Diary", "owner" to "Owner", "created" to "Created")
     var interest: Interest? = null
     var table: InterestTable? = null
     var creator: GenericEntityEditor? = null
@@ -311,8 +311,8 @@ class EntryPane(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             }
             override fun invoke(e: Event) {
                 console.log("showing editor for ${entity!!["title"]} on ${that.editor?.id}")
-                editor?.select(entity)
-                editor?.show()
+                editor.select(entity)
+                editor.show()
             }
         })
 
@@ -327,7 +327,7 @@ class EntryEditor(interest: Interest, id: String = BaseComponent.id()) : EntityE
     override fun initialise(n: HTMLDivElement) {
         val that = this
         tae.editorOnly = true
-        tae.att("cols", "60")
+        tae.att("cols", "160")
         tae.att("rows", "5")
         this + tae
 
@@ -358,6 +358,7 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
     var diaries: Boolean = false
     var entries: Boolean = false
     val lastOwners: MutableList<Long> = ArrayList()
+    val lastDiaries: MutableList<Long> = ArrayList()
     override fun initialise(n: HTMLDivElement) {
         val d = this
         val ownerView = OwnerView()
@@ -377,18 +378,18 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                         diaries.table!!.onSelection {
                             val sel = it
                             console.log("selected diary $sel")
-                            val chg = d.lastOwners.size()==0 || d.lastOwners.any { !sel.contains(it) }
+                            val chg = d.lastDiaries.size()==0 || d.lastDiaries.any { !sel.contains(it) } || sel.any { !d.lastDiaries.contains(it) }
                             console.log("chg: $chg")
                             if (chg) {
-                                d.lastOwners.clear()
-                                d.lastOwners.addAll(sel)
-                                val f = it.map { "diary -> id = $it" }.makeString(" or ")
-                                if (f.size > 0) {
+                                d.lastDiaries.clear()
+                                d.lastDiaries.addAll(sel)
+                                val f = it.map { " id = $it" }.makeString(" or ", "diary -> (", ")")
+                                console.log("Filtering Entries ... $f")
+                                if (it.count() > 0) {
                                     val fj = APP!!.filterParser!!.parse<Json>(f)
                                     fj?.set("entity", "DiaryEntry")
                                     val i = entryPane.table!!.interest
                                     if (fj != null) {
-                                        console.log("Filtering Entries ... $f")
                                         i.filterJson(fj)
                                     }
                                 }
@@ -405,9 +406,9 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                     val nf = APP!!.filterParser!!.parse<Json>(nofilter)!!
                     nf.set("entity", "DiaryEntry")
                     entryPane.table?.interest?.filterJson(nf)
-                    val f = it.map { "(owner -> id = ${it})" }.makeString(" or ")
+                    val f = it.map { " id = ${it}" }.makeString(" or ", "owner -> (", ")")
                     console.log("Diary filter: $f")
-                    if (f.size > 0) {
+                    if (it.count() > 0) {
                         val fj = APP!!.filterParser!!.parse<Json>(f)
                         fj?.set("entity", "Diary")
                         val i = diaries.table?.interest

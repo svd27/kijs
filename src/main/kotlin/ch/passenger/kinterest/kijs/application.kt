@@ -147,16 +147,10 @@ class DiariesApp(base:String) : Application(base) {
     }
     override fun start() {
         console.log("START")
-        /*
-        ALL.galaxies["DiaryOwner"]!!.create("some") {
-            console.log(it)
-            it.filter(PropertyFilter(it.galaxy.descriptor, "GTE", "id", 0))
-        }
-        */
         val menu = UniverseMenu(ALL)
         val bl = document.getElementsByTagName("body")
         val root = Div(appname)
-        val tabber = Tabber("click")
+        val tabber = Tabber("mouseenter")
         val ex = OverviewPanel()
 
         tabber.addTab(Tab(Span{textContent="Universe"}, menu))

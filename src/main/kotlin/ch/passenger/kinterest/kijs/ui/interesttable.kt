@@ -167,6 +167,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                 } else {
                                     val entity = event.interest[idx]
                                     row.data("entity", "${entity?.id}")
+                                    if(entity?.dirty?:false) row.addClass("dirty") else row.removeClass("dirty")
                                     row.cells.forEach {
                                         val r = it.renderer
                                         when(r ) {

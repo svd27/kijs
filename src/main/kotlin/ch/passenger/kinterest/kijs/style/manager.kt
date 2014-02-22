@@ -30,6 +30,8 @@ import ch.passenger.kinterest.kijs.dom.StyleSheet
 import ch.passenger.kinterest.kijs.dom.CSSStyleRule
 import ch.passenger.kinterest.kijs.model.EntityState
 import ch.passenger.kinterest.kijs.ui.Label
+import ch.passenger.kinterest.kijs.ui.CompleterRenderEdit
+import ch.passenger.kinterest.kijs.ui.CustomCompleter
 
 /**
  * Created by svd on 19/01/2014.
@@ -244,9 +246,10 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
             it.buffer(0, 5)
             that.rulesTable = InterestTable(it)
             that.rulesTable!!.colorder.addAll(listOf("selector","properties"))
+            that.rulesTable!!.createColumns()
             that.rulesTable!!.label("selector", "Selector")
             that.rulesTable!!.label("properties", "Properties")
-            that.rulesTable!!.createColumns()
+
             val stbl = that.sheetsTable!!
             stbl.onSelection {
                 var fs = "id < 0"
@@ -280,11 +283,33 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                 ALL.galaxies["CSSProperty"]!!.create("stylemanager") {
                     it.buffer(0, 5)
                     that.propertiesTable = InterestTable(it)
-                    that.propertiesTable!!.colorder.addAll(listOf("name","value"))
+                    that.propertiesTable!!.colorder.addAll(listOf("role", "name","value"))
+                    that.propertiesTable!!.createColumns()
+                    that.propertiesTable!!.label("role", "Role")
                     that.propertiesTable!!.label("name", "Name")
                     that.propertiesTable!!.label("value", "Value")
                     that.propertiesTable!!.committer = true
-                    that.propertiesTable!!.createColumns()
+                    that.propertiesTable!!.addActions {
+                        val al = ActionListRenderer(that.propertiesTable!!.interest)
+
+                        al.addAction(object : ActionComponent(that.propertiesTable!!.interest) {
+                            {addClass("remove"); root.textContent = "-"}
+
+                            override fun invoke(e: Event) {
+                                if(entity==null) return
+                                val rt = that.rulesTable!!
+                                if(rt.selected.size()!=1) return
+                                val rule = that.rulesTable?.selected?.firstThat { true }
+                                if(rule!=null) {
+                                    val r = rt.interest.entity(rule)
+                                    rt.interest.galaxy.removeRelation(r, "properties", entity!!.id)
+                                }
+                            }
+                        })
+
+                        al
+                    }
+
                     val stbl = that.rulesTable!!
                     stbl.onSelection {
                         var fs = "id < 0"
@@ -295,10 +320,57 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                         val f = APP!!.filterParser!!.parse<Json>(fs)!!
                         that.propertiesTable!!.interest.filterJson(f)
                     }
+
                     that.plus(that.propertiesTable!!)
+                    ALL.galaxies["CSSProperty"]!!.create("stylemanager") {
+                        that+PropertyBag(it, that.rulesTable!!)
+                    }
                 }
             }
         }
+    }
+}
+
+class PropertyBag(val interest : Interest, val master:InterestTable, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
+    val table : InterestTable = InterestTable(interest)
+    val completer : CustomCompleter = CustomCompleter(ALL.galaxies["CSSProperty"]!!, array("name", "role"), "role");
+
+    {
+        val that = this
+        table.colorder.addAll(listOf("role", "name","value"))
+        table.createColumns()
+        table.label("role", "Role")
+        table.label("name", "Name")
+        table.label("value", "Value")
+        table.committer = true
+        table.addActions {
+            val al = ActionListRenderer(interest)
+
+            al.addAction(object : ActionComponent(interest) {
+                {
+                    addClass("add")
+                    root.textContent = "+"
+                }
+
+                override fun invoke(e: Event) {
+                    val  m = that.master
+                    val e = entity
+                    val sel = m.selected
+                    if(e!=null && sel.size()>0) {
+                        sel.forEach {
+                            val rule = m.interest.entity(it)
+                            m.interest.galaxy.addRelation(rule, "properties", e.id)
+                        }
+                    }
+                }
+            })
+
+            al
+        }
+
+        this+table;
+        this+completer
+        completer.on { console.log("!!!complete: " + it?.id); if(it!=null) interest.addEntity(it) }
     }
 }
 
@@ -310,9 +382,9 @@ class ManagedProperties(val interest:Interest, id:String=BaseComponent.id()) : C
         this+lbl
         this+tbl
         tbl.colorder.addAll(listOf("name","value"))
+        tbl.createColumns()
         tbl.label("name", "Name")
         tbl.label("value", "Value")
-        tbl.createColumns()
     }
 
     fun focus(sheet:Entity) {

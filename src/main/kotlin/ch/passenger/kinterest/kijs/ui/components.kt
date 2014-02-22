@@ -75,7 +75,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                 addClass(it.descriptor.entity)
                 span { +it.descriptor.entity }
                 val ti = input {
-                    root.defaultValue = "a name";
+                    root.defaultValue = "name";
                     val ti = this; change { a?.enabled(ti.value.length > 0) }
                 }
                 div {

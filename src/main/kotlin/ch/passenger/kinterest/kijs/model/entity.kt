@@ -214,7 +214,7 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 public open class EntityTemplate(descriptor:EntityDescriptor) : Entity(descriptor, -1) {
     override val dirty: Boolean get() {
         return descriptor.properties.values().all {
-            (!it.readonly && it.nullable)
+            (!it.readonly && it.nullable) || (it.oneToMany)
             || ((it.readonly || !it.nullable) &&  written.containsKey(it.property))
 
         }

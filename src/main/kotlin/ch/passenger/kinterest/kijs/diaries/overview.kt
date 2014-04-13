@@ -240,14 +240,21 @@ class Diaries(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
                     override fun invoke(e: Event) {
                         console.log("invoke create entry")
+                        if(entity!=null) {
+                            val te = that.creator?.entity
+                            if (te != null) te["diary"] = entity!!.id
+                            that.creator?.show()
+                        }
+                        /*
                         val s = that.table?.selected?.firstThat { true }
                         if (s != null) {
                             val e = that.interest!!.entity(s)
                             val te = that.creator?.entity
                             if (te != null) te["diary"] = e.id
                         }
+                        */
 
-                        that.creator?.show()
+
                     }
                 })
                 r
@@ -406,14 +413,16 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                     val nf = APP!!.filterParser!!.parse<Json>(nofilter)!!
                     nf.set("entity", "DiaryEntry")
                     entryPane.table?.interest?.filterJson(nf)
-                    val f = it.map { " id = ${it}" }.makeString(" or ", "owner -> (", ")")
-                    console.log("Diary filter: $f")
+
                     if (it.count() > 0) {
+                        val f = it.map { " id = ${it}" }.makeString(" or ", "owner -> (", ")")
+                        console.log("Diary filter: $f")
                         val fj = APP!!.filterParser!!.parse<Json>(f)
                         fj?.set("entity", "Diary")
                         val i = diaries.table?.interest
                         if (fj != null && i != null) i.filterJson(fj)
                     }
+
                 }
             }
         }

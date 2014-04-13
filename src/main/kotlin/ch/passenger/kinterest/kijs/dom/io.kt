@@ -31,7 +31,7 @@ class Ajax(val url:String, val method:String="GET") {
 
     fun asObservabe() : Observable<String> {
         val s : Subject<String> = Subject()
-        console.log(s)
+        //console.log(s)
         val target = req as EventSource
         target.addEventListener("load") {
             console.log("RESP: ${req.responseText}")

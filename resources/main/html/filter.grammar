@@ -73,6 +73,7 @@ match =
    '>=' {return "GTE"}
   / '<=' {return "LTE"}
   / '~=' {return "LIKE"}
+  / '!~' {return "NOTLIKE"}
   / '=' {return "EQ"}
   / '>' {return "GT"}
   / '<' {return "LT"}

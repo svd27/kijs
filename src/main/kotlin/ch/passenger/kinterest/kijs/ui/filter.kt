@@ -95,8 +95,10 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
     val subject : Subject<Entity?> = Subject()
     var silent : Boolean = false
       set(v) {
+          if(v) {
           candidates.clear()
           selected = null
+          }
       }
 
     var createFilter : (String)->String = {
@@ -117,6 +119,14 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
         list.addClass("completerlist")
         d+input
         d+list
+    }
+
+    fun select() {
+        val entity = interest?.entity(selected!!)!!
+        input.value = entity[label].toString()
+        if(!silent)
+            subject.onNext(entity)
+        list.removeChildren()
     }
 
     fun build() {
@@ -146,11 +156,7 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
 
                 if (ke.keyCode in listOf(13)) {
                     if(that.selected!=null) {
-                        val entity = that.interest?.entity(that.selected!!)!!
-                        that.input.value = entity[that.label].toString()
-                        if(!that.silent)
-                          subject.onNext(entity)
-                        that.list.removeChildren()
+                       that.select()
                     }
                 } else {
                     var idx = -1
@@ -224,6 +230,11 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
                                     textContent = entity?.get(that.label)?.toString()?:"BAD"
 
                                 if(eid==that.selected) addClass("selected")
+                                on("click") {
+                                    that.selected = eid
+                                    console.log("select $eid")
+                                    that.select()
+                                }
                             }
                         }
                     }

@@ -18,20 +18,32 @@ native fun String.replace(suborreg:String, repl:String) : String = js.noImpl
 fun main(args: Array<String>) {
     window.onload = {
         console.log("gogo")
+
+        (1..3).forEach {
+            val sa = setOf(1, 2, 3, 4)
+            val sb = setOf(2, 4)
+            val sc = sa-sb
+            console.log(sc)
+            sc.forEach { console.log(it) }
+        }
+
         var base = document.baseURI
+        val ssl = base.startsWith("https")
         base = base.replace("http://", "");
+        base = base.replace("https://", "");
         base = base.replace("/static/index.html", "")
         console.log("BASE: $base")
-        val app = DiariesApp(base)
+        val app = DiariesApp(base, ssl)
     }
 
 }
 
+/*
 fun test() {
     Rx.Observable.fromArray(Array(5) { it }).subscribe { console.log(it * 2) }
 
 
-    val req = Ajax("http://localhost/diaries")
+    val req = Ajax("${APP!!.HTTP}localhost/diaries")
     req.asObservabe().subscribe {
         val body = document.getElementsByTagName("body").item(0)
         if (it is String) {
@@ -67,3 +79,4 @@ fun test() {
     }
     req.start()
 }
+*/

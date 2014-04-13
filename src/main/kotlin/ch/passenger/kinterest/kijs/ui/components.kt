@@ -59,7 +59,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
         div.anchor {
             textContent = "DUMP"
             click {
-                val ax = Ajax("http://${APP!!.base}/dump")
+                val ax = Ajax("${APP!!.HTTP}${APP!!.base}/dump")
                 ax.asObservabe().subscribe {
                     console.log(JSON.parse<Json>(it))
                 }

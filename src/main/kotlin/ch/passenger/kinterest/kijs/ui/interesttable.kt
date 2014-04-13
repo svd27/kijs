@@ -141,7 +141,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                                         }
                                                     }
                                                 }
-                                                console.log("selection now: ${that.selection}")
+                                                //console.log("selection now: ${that.selection}")
 
                                                 if(!oldsel.same(that.selected))
                                                 that.selector.onNext(that.selection)

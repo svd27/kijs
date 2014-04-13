@@ -8,8 +8,6 @@ import ch.passenger.kinterest.kijs.model.Galaxy
 import ch.passenger.kinterest.kijs.model.ALL
 import ch.passenger.kinterest.kijs.model.PropertyFilter
 import ch.passenger.kinterest.kijs.ui.UniverseMenu
-import js.dom.html.document
-import js.dom.html.window
 import ch.passenger.kinterest.kijs.ui.Div
 import ch.passenger.kinterest.kijs.model.ServerEvent
 import ch.passenger.kinterest.kijs.model.ServerInterestOrderEvent
@@ -27,22 +25,32 @@ import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.diaries.OverviewPanel
 import ch.passenger.kinterest.kijs.style.CSSExporter
 import ch.passenger.kinterest.kijs.style.StyleManagerView
+import js.dom.html.document
+import js.dom.html.window
 
 /**
  * Created by svd on 07/01/2014.
  */
-open class Application(val base: String) : Disposable {
+open class Application(val base: String, val ssl:Boolean) : Disposable {
     var appname: String = ""
     var events : SocketObservable? = null
     var entities : SocketObservable? = null
     val APPKEY = "ki-application";
     val disposables : MutableSet<Disposable> = HashSet();
     var filterParser : PegParser? = null
+    val HTTP : String
+    val WS : String
 
     {
 
         setKIData(APPKEY, this)
         console.log(document.baseURI)
+    }
+
+    {
+        APP = this
+        HTTP = if(ssl) "https://" else "http://"
+        WS = if(ssl) "wss://" else "ws://"
     }
 
     fun setKIData(name:String, value:Any) {
@@ -54,14 +62,14 @@ open class Application(val base: String) : Disposable {
 
     var session: Int = -1
     {
-        val req = Ajax("http://$base")
+        val req = Ajax("${APP!!.HTTP}$base")
         req.asObservabe().subscribe {
             val json = JSON.parse<Json>(it)
             appname = json.get("application").toString()
             session = safeParseInt(json.get("session").toString())!!
             console.log("app ${appname} session: ${session}")
-            events = SocketObservable("ws://$base/events")
-            entities = SocketObservable("ws://$base/entities");
+            events = SocketObservable("${APP!!.WS}$base/events")
+            entities = SocketObservable("${APP!!.WS}$base/entities");
             events?.subject?.subscribe {
                 //console.log(it);
                 if (it.`type` == "message") {
@@ -97,7 +105,7 @@ open class Application(val base: String) : Disposable {
             sm.forEach {
                 ALL.galaxies[it.get("entity") as String] = Galaxy(EntityDescriptor(it))
             }
-            val getGrammer = Ajax("http://$base/static/filter.grammar")
+            val getGrammer = Ajax("${APP!!.HTTP}$base/static/filter.grammar")
             getGrammer.asObservabe().subscribe {
                 filterParser = PEG.buildParser(it)
                 val test = filterParser?.parse<Json>("(state = \"ONLINE\") AND (strength>1)")
@@ -141,16 +149,14 @@ open class Application(val base: String) : Disposable {
     }
 }
 
-class DiariesApp(base:String) : Application(base) {
-    {
-        APP = this
-    }
+class DiariesApp(base:String, ssl:Boolean) : Application(base, ssl) {
+
     override fun start() {
         console.log("START")
         val menu = UniverseMenu(ALL)
         val bl = document.getElementsByTagName("body")
         val root = Div(appname)
-        val tabber = Tabber("mouseenter")
+        val tabber = Tabber("click")
         val ex = OverviewPanel()
 
         tabber.addTab(Tab(Span{textContent="Universe"}, menu))

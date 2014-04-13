@@ -512,14 +512,22 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
         }
 
 
-        completer!!.onBlur {
+        /*
+        completer.onBlur {
             console.log("BLURRRRR")
 
             hideEditor()
             showRenderer()
         }
+        */
 
-        completer!!.on { value(it?.id) }
+        completer.on {
+            hideEditor()
+            showRenderer()
+            value(it?.id)
+            console.log("completer select: ")
+            console.log(it?:"none")
+        }
     }
 
 

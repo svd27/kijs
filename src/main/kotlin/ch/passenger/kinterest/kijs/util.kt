@@ -7,6 +7,7 @@ import js.dom.html.HTMLOptionsCollection
 import js.dom.html.HTMLOptionElement
 import org.w3c.dom.NodeList
 import org.w3c.dom.Node
+import js.debug.console
 
 /**
  * Created by svd on 07/01/2014.
@@ -14,7 +15,7 @@ import org.w3c.dom.Node
 
 fun<T> Set<T>.minus(os:Set<T>) : Set<T> {
     val res = HashSet<T>()
-    this.filter { !os.contains(it) }.forEach { res.add(it) }
+    this.filter { console.log(os); !os.contains(it) }.forEach { res.add(it) }
     return res
 }
 
@@ -189,7 +190,7 @@ public class Tuple2<A, B> (
     public fun component1(): A = first
     public fun component2(): B = second
 
-    public fun toString(): String = "($first, $second)"
+    public override fun toString(): String = "($first, $second)"
 }
 
 fun Int.to(n:Int) : Iterable<Int> {

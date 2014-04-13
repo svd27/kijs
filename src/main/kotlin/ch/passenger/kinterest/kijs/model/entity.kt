@@ -203,12 +203,12 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 
     fun hasProperty(p:String) : Boolean = descriptor.properties.containsKey(p)
 
-    public fun equals(o:Any?) : Boolean {
+    public override fun equals(o:Any?) : Boolean {
         if(o is Entity) return o.id == id
         return false
     }
 
-    public fun hashCode() : Int = id.hashCode()
+    public override fun hashCode() : Int = id.hashCode()
 }
 
 public open class EntityTemplate(descriptor:EntityDescriptor) : Entity(descriptor, -1) {
@@ -235,7 +235,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     val heaven : MutableMap<Long,Entity> = HashMap()
     val interests : MutableMap<Int,Interest> = HashMap()
     val NOTLOADED : Entity = Entity(descriptor, -1)
-    val retrieving : MutableSet<Long> = HashSet()
+    val retrieving : MutableList<Long> = ArrayList()
     val subRetriever : Subject<Long> = Subject<Long>();
 
     {
@@ -246,10 +246,16 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
 
     fun dretrieve(ids:Array<Long>) {
         val list = ArrayList<Long>()
-        ids.filter { !retrieving.contains(it) }.forEach { retrieving.add(it); if(!list.contains(it)) list.add(it) }
+        for(id in ids) {
+            if(!retrieving.contains(id)) {
+                retrieving.add(id)
+                if(!list.contains(id)) list.add(id)
+            }
+        }
+        //ids.filter { !retrieving.contains(it) }.forEach { retrieving.add(it); if(!list.contains(it)) list.add(it) }
 
         if(list.size()>0) {
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/retrieve", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/retrieve", "POST")
 
         req.start(JSON.stringify(list))
         }
@@ -261,7 +267,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     }
 
     fun create(name:String, cb:(Interest)->Unit) {
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/create/$name", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/create/$name", "GET")
         req.asObservabe().subscribe {
             console.log(it);
             val json = JSON.parse<Json>(it)
@@ -277,7 +283,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
             e.revert()
             return
         }
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/save", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/save", "POST")
 
         val json = e.collect()
         e.revert()
@@ -285,7 +291,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     }
 
     fun createEntity(e: Entity, cb: (Long?) -> Unit = { }) {
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/createEntity", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/createEntity", "POST")
         req.asObservabe().subscribe({
             val js = JSON.parse<Json>(it)
             val ok = js.get("response")
@@ -307,13 +313,13 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     fun call(target:Long, action:String, args:Array<Any?>, cb:(String)->Unit, err:(Exception)->Unit={console.error(it)})  {
         console.log("CALL: $target.$action")
         val pars = JSON.stringify(args)
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${target}/action/$action", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/entity/${target}/action/$action", "POST")
         req.asObservabe().subscribe(Rx.Observer.create<String>(cb, err, {}))
         req.start(pars)
     }
 
-    fun get(id:Long) : Entity = if(id in heaven.keySet()) heaven[id]!! else {subRetriever.onNext(id); NOTLOADED; }
-    fun contains(id:Long) = id in heaven.keySet()
+    fun get(id:Long) : Entity = if(heaven.containsKey(id)) heaven.get(id)!! else {subRetriever.onNext(id); NOTLOADED; }
+    fun contains(id:Long) = heaven.containsKey(id)
 
     fun consume(ev:ServerInterestEvent) {
         if(ev is ServerInterestOrderEvent) {
@@ -357,12 +363,12 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     }
 
     fun addRelation(source:Entity, property:String, add:Long) {
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/add/$add", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/add/$add", "GET")
         req.start()
     }
 
     fun removeRelation(source:Entity, property:String, rem:Long) {
-        val req = Ajax("http://${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/remove/$rem", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${descriptor.entity}/entity/${source.id}/$property/remove/$rem", "GET")
         req.start()
     }
 
@@ -434,7 +440,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
 
 
     fun sort(keys:Array<SortKey>) {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/orderBy", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/orderBy", "POST")
         val js = Array<Json>(keys.size) {
             val k = keys[it]
             val j = JSON.parse<Json>("{}")
@@ -466,17 +472,17 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     }
 
     fun refresh() {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/refresh", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/refresh", "GET")
         req.start()
     }
 
     fun filterJson(f:Json) {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/filter/$id", "POST")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/filter/$id", "POST")
         req.start(JSON.stringify(f))
     }
 
     fun buffer(offset:Int, limit:Int) {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/offset/$offset/limit/$limit", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/offset/$offset/limit/$limit", "GET")
         req.start()
     }
 
@@ -485,7 +491,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     }
 
     fun plus(aid:Long) {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/add/${aid}", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/add/${aid}", "GET")
         req.start()
         if(eager) {
             galaxy.retrieve(listOf(aid))
@@ -493,12 +499,12 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     }
 
     fun remove(e:Entity) {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/remove/${e.id}", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/remove/${e.id}", "GET")
         req.start()
     }
 
     fun clear() {
-        val req = Ajax("http://${APP!!.base}/${galaxy.descriptor.entity}/$id/clear", "GET")
+        val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/clear", "GET")
         req.start()
     }
 

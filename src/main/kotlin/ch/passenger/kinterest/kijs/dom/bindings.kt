@@ -42,8 +42,8 @@ native trait DOMTokenList {
     fun contains(token: String): Boolean
 }
 
-public native val Element.classList: DOMTokenList = js.noImpl
-public native val Element.dataset: MutableMap<String, String> = js.noImpl
+public native val Element.classList: DOMTokenList get() = js.noImpl
+public native val Element.dataset: MutableMap<String, String> get() = js.noImpl
 public native fun Element.setAttribute(name: String, value: String): Unit = js.noImpl
 public native fun Element.getAttribute(name: String): String = js.noImpl
 public native fun Element.removeAttribute(name: String): String = js.noImpl
@@ -55,8 +55,6 @@ public native fun KIStyle(e: HTMLElement, name: String, value: String): Unit = j
 public native fun KIStyle(e: HTMLElement, name: String): String = js.noImpl
 
 
-public native var HTMLDocument.kidata: MutableMap<String, Any>? = null
-
 
 native fun EventTarget.addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean = false) = js.noImpl
 
@@ -65,7 +63,12 @@ native trait KeyboardEvent : Event {
 }
 
 
-public native val HTMLDocument.styleSheets: StyleSheetList = js.noImpl
+
+public native var HTMLDocument.kidata: MutableMap<String,Any>?
+    get() = js.noImpl
+    set(v) = js.noImpl
+
+public native val HTMLDocument.styleSheets: StyleSheetList get() = js.noImpl
 
 public native trait StyleSheetList {
     public val length: Int
@@ -93,7 +96,7 @@ public fun CSSStyleDeclaration.forEach(cb:(String,String)->Unit) {
     }
 }
 
-public native val CSSRule.`type`: Int = js.noImpl
+public native val CSSRule.`type`: Int get() = js.noImpl
 
 public fun CSSRuleList.forEach(cb: (CSSRule) -> Unit) {
     for (i in (0..this.length - 1)) cb(item(i))

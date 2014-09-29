@@ -19,6 +19,7 @@ import js.dom.html.HTMLInputElement
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.EntityState
 import java.util.HashMap
+import js.lastIndexOf
 
 /**
  * Created by svd on 18/01/2014.
@@ -36,7 +37,8 @@ class CSSExporter() : Component<HTMLDivElement>() {
         sheets = this.select {
             val that = this
             document.styleSheets.forEach {
-                that.option(it.href, it.href.substring(it.href.lastIndexOf("/"), it.href.length)) {}
+                if(it.href!=null)
+                that.option(it.href, it.href.substring(it.href.lastIndexOf("/")..it.href.length)) {}
             }
             selected = 0
         }

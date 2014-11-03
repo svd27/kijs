@@ -2,12 +2,15 @@ package ch.passenger.kinterest.kijs.dom
 
 import org.w3c.dom.events.EventTarget
 import org.w3c.dom.Element
-import js.dom.html.HTMLElement
-import js.dom.html.HTMLDocument
+import kotlin.js.dom.html.HTMLElement
+import kotlin.js.dom.html.HTMLDocument
 import org.w3c.dom.events.Event
-import js.dom.html.CSSRule
-import js.dom.html.CSSStyleDeclaration
+import kotlin.js.dom.html.CSSRule
+import kotlin.js.dom.html.CSSStyleDeclaration
 import org.w3c.dom.events.MouseEvent
+import kotlin.js.native
+import kotlin.js.noImpl
+
 
 /**
  * Created by svd on 07/01/2014.
@@ -20,13 +23,13 @@ trait Output {
     public native fun error(message: Any): Unit
 }
 
-public native var console: Output = js.noImpl
+//public native var console: Output = js.noImpl
 
 native trait EventSource {
     fun addEventListener(kind: String, cb: (Event) -> Unit) {
         addEventListener(kind, cb, false)
     }
-    fun addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean) = js.noImpl
+    native fun addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean) : Unit = js.noImpl
 }
 
 native trait MessageEvent : org.w3c.dom.events.Event {
@@ -56,7 +59,7 @@ public native fun KIStyle(e: HTMLElement, name: String): String = js.noImpl
 
 
 
-native fun EventTarget.addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean = false) = js.noImpl
+native fun EventTarget.addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean = false) : Unit = js.noImpl
 
 native trait KeyboardEvent : Event {
     val keyCode: Long

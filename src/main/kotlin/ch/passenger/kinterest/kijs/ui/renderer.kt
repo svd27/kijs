@@ -4,7 +4,7 @@ import ch.passenger.kinterest.kijs.model.*
 import ch.passenger.kinterest.kijs.dom.*
 import ch.passenger.kinterest.kijs.*
 import moments.*
-import js.dom.html.*
+import kotlin.js.dom.html.*
 import rx.js.*
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.Event

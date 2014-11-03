@@ -71,20 +71,20 @@ native trait ProgressEvent : Event {
 
 public native class WebSocket(val url : String) {
     val readyState : Int = js.noImpl
-    var onclose : (e : MessageEvent) -> Unit = js.noImpl
-    var onerror : (e : MessageEvent) -> Unit = js.noImpl
-    var onmessage : (e : MessageEvent) -> Unit = js.noImpl
-    var onopen : (e : MessageEvent) -> Unit = js.noImpl
+    var onclose : (e : MessageEvent) -> Unit = noImpl
+    var onerror : (e : MessageEvent) -> Unit = noImpl
+    var onmessage : (e : MessageEvent) -> Unit = noImpl
+    var onopen : (e : MessageEvent) -> Unit = noImpl
 
-    fun close(code : Long?, reason : String?) = js.noImpl
-    fun send(msg : String) = js.noImpl
+    fun close(code : Long?, reason : String?) : Unit = noImpl
+    fun send(msg : String) : Unit = noImpl
 }
 
 public class SocketObservable(val url:String, val subject : Subject<MessageEvent> = Subject())  {
-    var ws : WebSocket = WebSocket(url);
+    val ws : WebSocket = WebSocket(url);
     {
         console.log("init socket $url")
-        console.log(ws!!)
+        console.log(ws)
       ws.onclose = { subject.onNext(it); subject.onCompleted()}
       ws.onerror = {subject.onNext(it); subject.onError(Exception())}
       ws.onopen = {subject.onNext(it)}
@@ -92,6 +92,6 @@ public class SocketObservable(val url:String, val subject : Subject<MessageEvent
     }
 
 
-    fun close() {ws?.close(0, "")}
-    fun send(msg:String) = ws?.send(msg)
+    fun close() {ws.close(0, "")}
+    fun send(msg:String) = ws.send(msg)
 }

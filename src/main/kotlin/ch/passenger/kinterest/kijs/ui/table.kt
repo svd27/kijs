@@ -1,9 +1,8 @@
 package ch.passenger.kinterest.kijs.ui
 
-import js.dom.html.HTMLTableElement
-import js.dom.html.*
+import kotlin.js.dom.html.HTMLTableElement
+import kotlin.js.dom.html.*
 import java.util.ArrayList
-import ch.passenger.kinterest.kijs.dom.console
 
 /**
  * Created by svd on 08/01/2014.

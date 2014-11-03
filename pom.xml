@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <kotlin.version>0.1-SNAPSHOT</kotlin.version>
+        <kotlin.version>0.9.66</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -22,6 +22,7 @@
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.jetbrains.kotlin</groupId>
@@ -44,11 +45,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.6</version>
-                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>

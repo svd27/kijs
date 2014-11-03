@@ -2,14 +2,14 @@ package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.Universe
 import ch.passenger.kinterest.kijs.dom.*
-import js.dom.html.HTMLDivElement
+import kotlin.js.dom.html.HTMLDivElement
 import org.w3c.dom.Element
-import js.dom.html.document
+import kotlin.js.dom.html.document
 import ch.passenger.kinterest.kijs.forEach
 import rx.js.Disposable
 import java.util.HashSet
 import ch.passenger.kinterest.kijs.model.Interest
-import js.dom.html.HTMLElement
+import kotlin.js.dom.html.HTMLElement
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.PropertyDescriptor
 import ch.passenger.kinterest.kijs.model.EntityDescriptor
@@ -34,9 +34,8 @@ import ch.passenger.kinterest.kijs.any
 import ch.passenger.kinterest.kijs.firstThat
 import org.w3c.dom.events.MouseEvent
 import ch.passenger.kinterest.kijs.to
-import js.dom.html.HTMLSelectElement
+import kotlin.js.dom.html.HTMLSelectElement
 import ch.passenger.kinterest.kijs.model.EntityTemplate
-import ch.passenger.kinterest.kijs.count
 
 /**
  * Created by svd on 08/01/2014.

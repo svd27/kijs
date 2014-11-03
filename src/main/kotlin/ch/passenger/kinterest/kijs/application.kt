@@ -25,8 +25,9 @@ import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.diaries.OverviewPanel
 import ch.passenger.kinterest.kijs.style.CSSExporter
 import ch.passenger.kinterest.kijs.style.StyleManagerView
-import js.dom.html.document
-import js.dom.html.window
+import kotlin.js.dom.html.document
+import kotlin.js.dom.html.window
+
 
 /**
  * Created by svd on 07/01/2014.

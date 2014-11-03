@@ -11,15 +11,11 @@ import ch.passenger.kinterest.kijs.reduce
 import ch.passenger.kinterest.kijs.any
 import java.util.ArrayList
 import ch.passenger.kinterest.kijs.dom.Ajax
-import ch.passenger.kinterest.kijs.setOf
-import ch.passenger.kinterest.kijs.dom.console
 import rx.js.Subject
 import rx.js.Observable
 import ch.passenger.kinterest.kijs.filter
-import ch.passenger.kinterest.kijs.listOf
 import rx.js.Disposable
 import moments.Moment
-import ch.passenger.kinterest.kijs.all
 import java.util.HashSet
 import rx.js.Observer
 import rx.js.RxFactory
@@ -597,7 +593,7 @@ abstract class Filter() {
 
 abstract class EntityFilter(val descriptor:EntityDescriptor) : Filter() {
 
-    open override fun serialise(): Json {
+    override fun serialise(): Json {
         val json = JSON.parse<Json>("{}")
         json.set("entity", descriptor.entity)
 

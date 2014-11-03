@@ -1,6 +1,6 @@
 package ch.passenger.kinterest.kijs
 
-import js.dom.html.*
+import kotlin.js.dom.html.*
 import org.w3c.dom.events.EventTarget
 import org.w3c.dom.events.EventListener
 import rx.js.Rx

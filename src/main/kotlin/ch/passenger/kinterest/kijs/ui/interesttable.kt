@@ -1,13 +1,15 @@
 package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.*
-import js.dom.html.*
-import java.util.*
+import kotlin.js.dom.html.*
 import rx.js.Subject
 import ch.passenger.kinterest.kijs.*
 import ch.passenger.kinterest.kijs.dom.*
 import org.w3c.dom.events.MouseEvent
 import rx.js.Disposable
+import java.util.HashMap
+import java.util.ArrayList
+import java.util.HashSet
 
 
 /**
@@ -299,11 +301,11 @@ class Pager(val interest: Interest, id: String = BaseComponent.id()) : Component
     fun filter(ti:TextInput) {
         if(ti.value.isEmpty()) return
         try {
-            val f = APP?.filterParser?.parse(ti.value)!! as Json
+            val f = APP?.filterParser?.parse<Json>(ti.value)!! as Json
             ti.removeClass("error")
             console.log(f)
             f.set("entity", interest.galaxy.descriptor.entity)
-            if(f != null) interest.filterJson(f)
+            interest.filterJson(f)
         } catch(e: Exception) {
             ti.addClass("error")
             console.error(e)

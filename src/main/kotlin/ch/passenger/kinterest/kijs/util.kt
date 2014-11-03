@@ -3,11 +3,10 @@ package ch.passenger.kinterest.kijs
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
-import js.dom.html.HTMLOptionsCollection
-import js.dom.html.HTMLOptionElement
+import kotlin.js.dom.html.HTMLOptionsCollection
+import kotlin.js.dom.html.HTMLOptionElement
 import org.w3c.dom.NodeList
 import org.w3c.dom.Node
-import js.debug.console
 
 /**
  * Created by svd on 07/01/2014.
@@ -25,10 +24,12 @@ fun<T> Set<T>.same(os:Set<T>) : Boolean {
     return s1.isEmpty() && s2.isEmpty()
 }
 
+/*
 fun<T> MutableCollection<T>.addAll(it:Iterable<T>) {
     val c = this
     it.forEach { c.add(it) }
 }
+*/
 
 fun<T> Array<T>.forEach(cb: (T)->Unit) {
     for(it in this) cb(it)
@@ -40,8 +41,10 @@ fun<T> Array<T>.filter(cb: (T)->Boolean) : Iterable<T> {
     return res
 }
 
+/*
 fun<T> Array<T>.contains(t:T) :Boolean = any { it==t }
 fun<T> Iterable<T>.contains(t:T) :Boolean = any { it==t }
+*/
 
 fun<T> Array<T>.indexOf(t:T) : Int {
     for(i in 0..(size-1)) if(get(i)==t) return i
@@ -58,9 +61,11 @@ fun<T> Array<T>.none(cond:(T)->Boolean) : Boolean {
     return true
 }
 
+/*
 fun<T> Iterable<T>.forEach(cb: (T)->Unit) {
     for(it in this) cb(it)
 }
+*/
 
 fun<T> Iterable<T?>.notNulls() : Iterable<T> {
     val res = ArrayList<T>()
@@ -69,17 +74,21 @@ fun<T> Iterable<T?>.notNulls() : Iterable<T> {
     return res
 }
 
+/*
 fun<T> Iterable<T>.filter(cb: (T)->Boolean) : Iterable<T> {
     val res = ArrayList<T>()
     for(it in this) if(cb(it)) res.add(it)
     return res
 }
+*/
 
+/*
 fun<T,U> Iterable<T>.map(cb: (T)->U) : Iterable<U> {
     val res = ArrayList<U>()
     this.forEach { res.add(cb(it)) }
     return res
 }
+*/
 
 fun<T,U> Iterable<T>.mapIdx(cb: (T,Int)->U) : Iterable<U> {
     val res = ArrayList<U>()
@@ -95,15 +104,19 @@ fun<T,U> Iterable<T>.reduce(initial:U,cb: (U,T)->U) : U {
     return res
 }
 
+/*
 fun<T> Iterable<T>.any(cond:(T)->Boolean) : Boolean {
     for(it in this) if(cond(it)) return true
     return false
 }
+*/
 
+/*
 fun<T> Iterable<T>.all(cond:(T)->Boolean) : Boolean {
     for(it in this) if(!cond(it)) return false
     return true
 }
+*/
 
 
 fun<T> Iterable<T>.firstThat(cond:(T)->Boolean) : T? {
@@ -116,11 +129,13 @@ fun<T> Iterable<T>.none(cond:(T)->Boolean) : Boolean {
     return true
 }
 
+/*
 fun<T> Iterable<T>.count() : Int {
     var res = 0
     forEach { res++ }
     return res
 }
+*/
 
 
 fun<T,U> Array<T>.map(cb:(T)->U) : Iterable<U> {
@@ -147,6 +162,7 @@ fun<K,V> mapOf(vararg ps:Tuple2<K,V>) : Map<K,V> {
     return m
 }
 
+/*
 fun<T> setOf(vararg ts:T) : Set<T> {
     val s = HashSet<T>()
     ts.forEach { s.add(it) }
@@ -158,13 +174,17 @@ fun<T> setOf(ts:Iterable<T>) : Set<T> {
     ts.forEach { s.add(it) }
     return s
 }
+*/
 
+/*
 fun<T> listOf(vararg ts:T) : List<T> {
     val l = ArrayList<T>(ts.size)
     ts.forEach { l.add(it) }
     return l
 }
+*/
 
+/*
 fun<T> Iterable<T>.makeString(sep:String="", prefix:String="", postFix:String="") :String {
     val b = this.reduce(StringBuilder()) {
         (init, next) ->
@@ -173,6 +193,7 @@ fun<T> Iterable<T>.makeString(sep:String="", prefix:String="", postFix:String=""
     }
     return "$prefix$b$postFix"
 }
+*/
 
 fun<T> Array<T>.makeString(sep:String="", prefix:String="", postFix:String="") :String {
     val b = this.reduce(StringBuilder()) {
@@ -225,6 +246,7 @@ fun HTMLOptionsCollection.indexWhere(cb:(HTMLOptionElement)->Boolean) : Int {
     return -1
 }
 
+
 fun NodeList.filter(cb:(Node)->Boolean) : Iterable<Node> {
     val fl = ArrayList<Node>()
     for(i in 0..(this.length-1)) if(cb(item(i))) fl.add(item(i))
@@ -250,4 +272,4 @@ fun<T> NodeList.map(cb:(Node)->T) : Iterable<T> {
     return res
 }
 
-fun<T,U> T.to(a:U) : Tuple2<T,U> = Tuple2(this, a)
+//fun<T,U> T.to(a:U) : Tuple2<T,U> = Tuple2(this, a)

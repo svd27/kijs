@@ -1,29 +1,28 @@
 package ch.passenger.kinterest.kijs.ui
 
-import js.dom.html.document
+import kotlin.js.dom.html.document
 import org.w3c.dom.Node
-import js.dom.html.HTMLElement
-import js.dom.html.HTMLDivElement
-import js.dom.html.HTMLDListElement
+import kotlin.js.dom.html.HTMLElement
+import kotlin.js.dom.html.HTMLDivElement
+import kotlin.js.dom.html.HTMLDListElement
 
 import ch.passenger.kinterest.kijs.dom.*
-import js.dom.html.HTMLInputElement
+import kotlin.js.dom.html.HTMLInputElement
 import ch.passenger.kinterest.kijs.forEach
-import js.dom.html.HTMLAnchorElement
+import kotlin.js.dom.html.HTMLAnchorElement
 import rx.js.Disposable
 import java.util.HashSet
 import org.w3c.dom.events.Event
 import rx.js.*
 import org.w3c.dom.Element
 import java.util.ArrayList
-import js.dom.html.HTMLSelectElement
-import js.dom.html.HTMLOptionElement
+import kotlin.js.dom.html.HTMLSelectElement
+import kotlin.js.dom.html.HTMLOptionElement
 import ch.passenger.kinterest.kijs.indexWhere
-import ch.passenger.kinterest.kijs.contains
-import js.dom.html.HTMLLabelElement
+import kotlin.js.dom.html.HTMLLabelElement
 import ch.passenger.kinterest.kijs.map
-import js.dom.html.HTMLButtonElement
-import js.dom.html.HTMLTextAreaElement
+import kotlin.js.dom.html.HTMLButtonElement
+import kotlin.js.dom.html.HTMLTextAreaElement
 
 /**
  * Created by svd on 07/01/2014.

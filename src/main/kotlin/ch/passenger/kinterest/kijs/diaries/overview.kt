@@ -1,12 +1,10 @@
 package ch.passenger.kinterest.kijs.diaries
 
 import ch.passenger.kinterest.kijs.ui.BaseComponent
-import ch.passenger.kinterest.kijs.listOf
 import ch.passenger.kinterest.kijs.model.ALL
 import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.dom.console
 import ch.passenger.kinterest.kijs.ui.Component
-import js.dom.html.HTMLDivElement
+import kotlin.js.dom.html.HTMLDivElement
 import ch.passenger.kinterest.kijs.ui.InterestTable
 import ch.passenger.kinterest.kijs.model.Interest
 import ch.passenger.kinterest.kijs.ui.Div
@@ -35,9 +33,9 @@ import ch.passenger.kinterest.kijs.ui.EntityEditor
 import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.none
 import ch.passenger.kinterest.kijs.*
-import js.dom.html.CSSRule
-import js.dom.html.document
-import js.dom.html.CSSStyleDeclaration
+import kotlin.js.dom.html.CSSRule
+import kotlin.js.dom.html.document
+import kotlin.js.dom.html.CSSStyleDeclaration
 import ch.passenger.kinterest.kijs.dom.*
 
 /**

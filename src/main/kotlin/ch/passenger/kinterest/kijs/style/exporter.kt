@@ -1,7 +1,7 @@
 package ch.passenger.kinterest.kijs.style
 
-import js.dom.html.HTMLDivElement
-import js.dom.html.document
+import kotlin.js.dom.html.HTMLDivElement
+import kotlin.js.dom.html.document
 import ch.passenger.kinterest.kijs.dom.*
 import ch.passenger.kinterest.kijs.ui.Component
 import ch.passenger.kinterest.kijs.ui.SelectOne
@@ -9,17 +9,16 @@ import ch.passenger.kinterest.kijs.ui.TableBody
 import ch.passenger.kinterest.kijs.forEach
 import ch.passenger.kinterest.kijs.model.ALL
 import ch.passenger.kinterest.kijs.APP
-import js.dom.html.HTMLElement
+import kotlin.js.dom.html.HTMLElement
 import ch.passenger.kinterest.kijs.model.EntityTemplate
 import ch.passenger.kinterest.kijs.ui.TextInput
 import ch.passenger.kinterest.kijs.ui.InterestTable
-import ch.passenger.kinterest.kijs.listOf
 import ch.passenger.kinterest.kijs.model.InterestLoadEvent
-import js.dom.html.HTMLInputElement
+import kotlin.js.dom.html.HTMLInputElement
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.EntityState
 import java.util.HashMap
-import js.lastIndexOf
+import kotlin.js.lastIndexOf
 
 /**
  * Created by svd on 18/01/2014.

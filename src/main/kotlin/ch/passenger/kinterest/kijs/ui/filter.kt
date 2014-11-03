@@ -1,13 +1,12 @@
 package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.Interest
-import js.dom.html.HTMLDivElement
+import kotlin.js.dom.html.HTMLDivElement
 import ch.passenger.kinterest.kijs.model.PropertyDescriptor
 import ch.passenger.kinterest.kijs.forEach
-import ch.passenger.kinterest.kijs.dom.console
 import ch.passenger.kinterest.kijs.model.EntityDescriptor
 import ch.passenger.kinterest.kijs.model.Galaxy
-import js.dom.html.HTMLInputElement
+import kotlin.js.dom.html.HTMLInputElement
 import ch.passenger.kinterest.kijs.model.RelationFilter
 import ch.passenger.kinterest.kijs.model.PropertyFilter
 import ch.passenger.kinterest.kijs.model.InterestOrderEvent
@@ -15,13 +14,12 @@ import ch.passenger.kinterest.kijs.map
 import ch.passenger.kinterest.kijs.reduce
 import ch.passenger.kinterest.kijs.model.InterestLoadEvent
 import ch.passenger.kinterest.kijs.any
-import js.dom.html.HTMLOptionElement
+import kotlin.js.dom.html.HTMLOptionElement
 import ch.passenger.kinterest.kijs.dom.KIDATAset
 import ch.passenger.kinterest.kijs.dom.*
-import js.dom.html.HTMLElement
+import kotlin.js.dom.html.HTMLElement
 import ch.passenger.kinterest.kijs.dom.KIDATAget
 import ch.passenger.kinterest.kijs.dom.KeyboardEvent
-import ch.passenger.kinterest.kijs.listOf
 import org.w3c.dom.Element
 import java.util.ArrayList
 import ch.passenger.kinterest.kijs.model.Entity

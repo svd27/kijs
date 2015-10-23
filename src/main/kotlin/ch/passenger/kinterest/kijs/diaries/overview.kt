@@ -1,42 +1,13 @@
 package ch.passenger.kinterest.kijs.diaries
 
-import ch.passenger.kinterest.kijs.ui.BaseComponent
-import ch.passenger.kinterest.kijs.model.ALL
 import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.ui.Component
-import kotlin.js.dom.html.HTMLDivElement
-import ch.passenger.kinterest.kijs.ui.InterestTable
-import ch.passenger.kinterest.kijs.model.Interest
-import ch.passenger.kinterest.kijs.ui.Div
-import rx.js.Subject
 import ch.passenger.kinterest.kijs.mapOf
-import ch.passenger.kinterest.kijs.to
-import ch.passenger.kinterest.kijs.forEach
-import ch.passenger.kinterest.kijs.model.SortKey
-import ch.passenger.kinterest.kijs.model.SortDirection
-import java.util.ArrayList
-import ch.passenger.kinterest.kijs.makeString
-import ch.passenger.kinterest.kijs.map
-import ch.passenger.kinterest.kijs.ui.ActionListRenderer
-import ch.passenger.kinterest.kijs.ui.ActionComponent
-import ch.passenger.kinterest.kijs.model.InterestUpdateEvent
-import ch.passenger.kinterest.kijs.ui.EntityRendererEditor
-import ch.passenger.kinterest.kijs.ui.GenericEntityEditor
+import ch.passenger.kinterest.kijs.model.*
+import ch.passenger.kinterest.kijs.ui.*
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.events.Event
-import ch.passenger.kinterest.kijs.any
-import ch.passenger.kinterest.kijs.firstThat
-import ch.passenger.kinterest.kijs.ui.TextArea
-import ch.passenger.kinterest.kijs.ui.TextAreaEdit
-import ch.passenger.kinterest.kijs.ui.CommitRenderer
-import ch.passenger.kinterest.kijs.model.Entity
-import ch.passenger.kinterest.kijs.ui.EntityEditor
-import ch.passenger.kinterest.kijs.ui.Span
-import ch.passenger.kinterest.kijs.none
-import ch.passenger.kinterest.kijs.*
-import kotlin.js.dom.html.CSSRule
-import kotlin.js.dom.html.document
-import kotlin.js.dom.html.CSSStyleDeclaration
-import ch.passenger.kinterest.kijs.dom.*
+import java.util.*
+
 
 /**
  * Created by svd on 13/01/2014.
@@ -66,8 +37,9 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             that.table?.colorder?.clear()
             that.table!!.colorder.addAll(that.cols)
             that.table!!.createColumns()
-            that.labels.keySet().forEach {
-                that.table?.label(it, that.labels[it]!!)
+            that.labels.keys.forEach {
+                lbl ->
+                that.table?.label(lbl, that.labels[it]!!)
             }
 
             that.table?.addActions {
@@ -169,7 +141,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             that.detail?.commitRenderer?.subject?.subscribe { that.detail?.hide() }
             d.plus(that.detail!!)
 
-            it.sort(array(SortKey("nick", SortDirection.ASC)))
+            it.sort(arrayOf(SortKey("nick", SortDirection.ASC)))
             it.buffer(0, 5)
             it.filterJson(APP!!.filterParser!!.parse<Json>("id >= 0")!!)
             ALL.galaxies["DiaryOwner"]!!.create("buddies") {
@@ -183,7 +155,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
                 d + that.focusHeader
                 d + that.buddies!!
                 it.buffer(0, 5)
-                it.sort(array(SortKey("nick", SortDirection.ASC)))
+                it.sort(arrayOf(SortKey("nick", SortDirection.ASC)))
             }
         }
 
@@ -265,7 +237,7 @@ class Diaries(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
 
                 d.plus(that.table!!)
                 d.plus(that.creator!!)
-                it.sort(array(SortKey("created", SortDirection.ASC)))
+                it.sort(arrayOf(SortKey("created", SortDirection.ASC)))
                 it.buffer(0, 5)
             }
         }
@@ -300,7 +272,7 @@ class EntryPane(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
 
             that.plus(that.table!!)
             that.plus(that.editor!!)
-            it.sort(array(SortKey("created", SortDirection.ASC)))
+            it.sort(arrayOf(SortKey("created", SortDirection.ASC)))
             it.buffer(0, 5)
         }
     }
@@ -388,7 +360,7 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                             if (chg) {
                                 d.lastDiaries.clear()
                                 d.lastDiaries.addAll(sel)
-                                val f = it.map { " id = $it" }.makeString(" or ", "diary -> (", ")")
+                                val f = it.map { " id = $it" }.joinToString(" or ", "diary -> (", ")")
                                 console.log("Filtering Entries ... $f")
                                 if (it.count() > 0) {
                                     val fj = APP!!.filterParser!!.parse<Json>(f)
@@ -413,7 +385,7 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                     entryPane.table?.interest?.filterJson(nf)
 
                     if (it.count() > 0) {
-                        val f = it.map { " id = ${it}" }.makeString(" or ", "owner -> (", ")")
+                        val f = it.map { " id = ${it}" }.joinToString(" or ", "owner -> (", ")")
                         console.log("Diary filter: $f")
                         val fj = APP!!.filterParser!!.parse<Json>(f)
                         fj?.set("entity", "Diary")

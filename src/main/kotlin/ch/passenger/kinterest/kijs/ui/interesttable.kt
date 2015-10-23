@@ -1,10 +1,9 @@
 package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.*
-import kotlin.js.dom.html.*
 import rx.js.Subject
 import ch.passenger.kinterest.kijs.*
-import ch.passenger.kinterest.kijs.dom.*
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.events.MouseEvent
 import rx.js.Disposable
 import java.util.HashMap
@@ -27,10 +26,10 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
     var offset : Int = interest.offset
     var committer : Boolean = false
       set(v) {
-          $committer = v
+          field = v
           if(v) {
               colorder.add("commit")
-              val cr = {(it:Interest) -> console.log("COMMIT"); CommitRenderer(it)}
+              val cr = {it:Interest -> console.log("COMMIT"); CommitRenderer(it)}
               columns["commit"] = InterestTableColumn("commit", interest, cr)
           }
       }

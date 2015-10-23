@@ -1,41 +1,43 @@
 package ch.passenger.kinterest.kijs.ui
 
-import kotlin.js.dom.html.document
-import org.w3c.dom.Node
-import kotlin.js.dom.html.HTMLElement
-import kotlin.js.dom.html.HTMLDivElement
-import kotlin.js.dom.html.HTMLDListElement
-
-import ch.passenger.kinterest.kijs.dom.*
-import kotlin.js.dom.html.HTMLInputElement
+import ch.passenger.kinterest.kijs.dom.EventSource
+import ch.passenger.kinterest.kijs.dom.KIDATAget
+import ch.passenger.kinterest.kijs.dom.KIDATAset
+import ch.passenger.kinterest.kijs.dom.KIStyle
 import ch.passenger.kinterest.kijs.forEach
-import kotlin.js.dom.html.HTMLAnchorElement
-import rx.js.Disposable
-import java.util.HashSet
-import org.w3c.dom.events.Event
-import rx.js.*
-import org.w3c.dom.Element
-import java.util.ArrayList
-import kotlin.js.dom.html.HTMLSelectElement
-import kotlin.js.dom.html.HTMLOptionElement
 import ch.passenger.kinterest.kijs.indexWhere
-import kotlin.js.dom.html.HTMLLabelElement
 import ch.passenger.kinterest.kijs.map
-import kotlin.js.dom.html.HTMLButtonElement
-import kotlin.js.dom.html.HTMLTextAreaElement
+import org.w3c.dom.*
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.HTMLButtonElement
+import org.w3c.dom.HTMLDListElement
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLLabelElement
+import org.w3c.dom.HTMLOptionElement
+import org.w3c.dom.HTMLSelectElement
+import org.w3c.dom.HTMLTextAreaElement
+import org.w3c.dom.events.Event
+import rx.js.Disposable
+import rx.js.Observable
+import rx.js.Rx
+import rx.js.Subject
+import java.util.*
+import kotlin.browser.document
 
 /**
  * Created by svd on 07/01/2014.
  */
 
-trait BaseComponent<T : Element> : Disposable{
+interface BaseComponent<T : Element> : Disposable{
     val root: T
     val disposables: MutableSet<Disposable>
     val ready: Subject<Boolean>
 
-    protected abstract fun node(): T
+    fun node(): T
 
-    public fun<C : BaseComponent<*>> plus(c: C): C {
+    public operator fun<C : BaseComponent<*>> plus(c: C): C {
         root.appendChild(c.root)
         return c
     }
@@ -47,9 +49,9 @@ trait BaseComponent<T : Element> : Disposable{
      */
     public open fun readyState(): Boolean = true
     //make sure ready is only called once
-    protected var readyCalled: Boolean
+    var readyCalled: Boolean
 
-    protected fun iAmReady() {
+    fun iAmReady() {
         if (!readyCalled) {
             readyCalled = true
             ready.onNext(true)
@@ -68,11 +70,11 @@ trait BaseComponent<T : Element> : Disposable{
         }
     }
 
-    public fun String.plus() {
+    public operator fun String.unaryPlus() {
         this@BaseComponent.root.textContent = this
     }
 
-    public fun att(name: String): String = root.getAttribute(name)
+    public fun att(name: String): String = root.getAttribute(name)!!
     public fun att(name: String, value: String): Unit = root.setAttribute(name, value)
     public fun hasAtt(name:String) : Boolean = root.hasAttribute(name)
 
@@ -102,7 +104,7 @@ trait BaseComponent<T : Element> : Disposable{
 
     fun remove() {
         if (root.parentNode != null) {
-            root.parentNode.removeChild(root)
+            root.parentNode!!.removeChild(root)
         }
         dispose()
     }
@@ -110,7 +112,7 @@ trait BaseComponent<T : Element> : Disposable{
     fun removeChildren() {
         //if nodelist is live collection removing will change it
         //so map just copies first then deletes
-        root.childNodes.map { it }.forEach { it.parentNode.removeChild(it) }
+        root.childNodes.map { it }.forEach { it.parentNode!!.removeChild(it) }
     }
 
     override fun dispose() {
@@ -119,12 +121,12 @@ trait BaseComponent<T : Element> : Disposable{
     }
 
     var textContent: String
-        get() = root.textContent
+        get() = root.textContent!!
         set(v) {
             root.textContent = v
         }
 
-    class object {
+    companion  object {
         var idcount = 0
         fun id() = idcount++.toString()
     }
@@ -156,7 +158,7 @@ open class Tag<T : HTMLElement>(val name: String, val id: String = BaseComponent
     open fun initialise(n: T) {
     }
 
-    fun addClasses(vararg cls: String) = cls.forEach { addClass(it) }
+    fun addClasses(vararg cls: String) = cls.toList().forEach { addClass(it) }
     fun addClass(cls: String) = root.classList.add(cls)
     fun removeClass(cls: String) = root.classList.remove(cls)
     fun containsClass(cls: String): Boolean = root.classList.contains(cls)
@@ -279,13 +281,13 @@ abstract class FlowContainer<T : HTMLElement>(name: String, id: String) : Phrase
 
 class Div(id: String = BaseComponent.id()) : FlowContainer<HTMLDivElement>("div", id)
 class Span(id: String = BaseComponent.id(), init: Span.() -> Unit) : FlowContainer<HTMLElement>("span", id) {
-    {
+    init {
         init()
     }
 }
 
 class DL(id: String = BaseComponent.id(), init: DL.() -> Unit) : Tag<HTMLDListElement>("dl", id) {
-    {
+    init {
         init()
     }
     fun dt(id: String = BaseComponent.id(), init: DT.() -> Unit): DT {
@@ -400,15 +402,15 @@ open class Select(id: String = BaseComponent.id()) : Tag<HTMLSelectElement>("sel
 
 class SelectOne(id: String = BaseComponent.id()) : Select(id) {
     var selected: Int
-        get() = root.selectedIndex.toInt()
+        get() = root.selectedIndex
         set(v) {
-            root.selectedIndex = v.toDouble()
+            root.selectedIndex = v
         }
 
     var selectedValue: String?
         get() = (root.options.item(root.selectedIndex) as HTMLOptionElement?)?.value
         set(v) {
-            val idx = root.options.indexWhere { it.value == v }; root.selectedIndex = idx.toDouble()
+            val idx = root.options.indexWhere { it.value == v }; root.selectedIndex = idx
         }
 
 
@@ -422,7 +424,7 @@ class SelectMulitple(id: String = BaseComponent.id()) : Select(id) {
         get() {
             var res = ArrayList<Int>();
             for (i in 0..(root.options.length.toInt() - 1)) if ((root.options.item(i) as HTMLOptionElement).selected) res.add(i)
-            return res.copyToArray()
+            return res.toTypedArray()
         }
         set(v) {
             root.options.forEach { it.selected = false }; v.forEach { (root.options.item(it) as HTMLOptionElement).selected = true }
@@ -430,7 +432,7 @@ class SelectMulitple(id: String = BaseComponent.id()) : Select(id) {
 
     var selectedValues: Array<String>
         get()  {
-            var res = ArrayList<String>(); root.options.forEach { if (it.selected) res.add(it.value) }; return res.copyToArray()
+            var res = ArrayList<String>(); root.options.forEach { if (it.selected) res.add(it.value) }; return res.toTypedArray()
         }
         set(v) {
             root.options.forEach { it.selected = it.value in v }

@@ -1,25 +1,13 @@
 package ch.passenger.kinterest.kijs.model
 
-import java.util.HashMap
-import ch.passenger.kinterest.kijs.mapOf
-import ch.passenger.kinterest.kijs.map
-import java.util.Collections.emptyList
-import ch.passenger.kinterest.kijs.Tuple2
-import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.forEach
-import ch.passenger.kinterest.kijs.reduce
-import ch.passenger.kinterest.kijs.any
-import java.util.ArrayList
+import ch.passenger.kinterest.kijs.*
 import ch.passenger.kinterest.kijs.dom.Ajax
-import rx.js.Subject
-import rx.js.Observable
-import ch.passenger.kinterest.kijs.filter
-import rx.js.Disposable
 import moments.Moment
-import java.util.HashSet
-import rx.js.Observer
-import rx.js.RxFactory
+import rx.js.Disposable
 import rx.js.Rx
+import rx.js.Subject
+import java.util.*
+import kotlin.js.Json
 
 /**
  * Created by svd on 07/01/2014.
@@ -27,7 +15,7 @@ import rx.js.Rx
 
 public class EntityDescriptor(json:Json) {
     val entity : String = json.get("entity") as String
-    val properties : Map<String, PropertyDescriptor> = mapOf((json.get("properties") as Array<Json>).map { Tuple2(it.get("property") as String, PropertyDescriptor(it)) })
+    val properties : Map<String, PropertyDescriptor> = mapOf((json.get("properties") as Array<Json>).map { Pair(it.get("property") as String, PropertyDescriptor(it)) })
 }
 
 public class PropertyDescriptor(json:Json) {
@@ -86,7 +74,7 @@ public class PropertyDescriptor(json:Json) {
     }
 }
 
-public enum class EntityState {CREATED LOADED DELETED REMOVED}
+public enum class EntityState {CREATED, LOADED, DELETED, REMOVED}
 
 public open class Entity(public val descriptor : EntityDescriptor, public val id : Long ) {
     protected val values : MutableMap<String,Any?> = HashMap()
@@ -97,7 +85,7 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
     public val state : EntityState get() = _state
 
     public fun merge(json:Json) {
-        descriptor.properties.values().forEach {
+        descriptor.properties.values.forEach {
             val v = json.get(it.property)
             val cast = it.cast(v)
             values[it.property] = cast
@@ -234,7 +222,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     val retrieving : MutableList<Long> = ArrayList()
     val subRetriever : Subject<Long> = Subject<Long>();
 
-    {
+    init {
         subRetriever.bufferWithTimeOrCount(400, 100).subscribe { dretrieve(it) }
     }
 
@@ -422,7 +410,7 @@ public open class InterestEntityEvent(interest:Interest, val entity:Entity) : In
 public open class InterestLoadEvent(interest:Interest, entity:Entity, val idx:Int) : InterestEntityEvent(interest, entity)
 public open class InterestUpdateEvent(interest:Interest, entity:Entity, val idx:Int, val property:String, val old:Any?) : InterestEntityEvent(interest, entity)
 
-public enum class SortDirection {ASC DESC}
+public enum class SortDirection {ASC, DESC}
 public class SortKey(val property:String, var direction:SortDirection) {fun toggle() {if(direction==SortDirection.ASC) direction=SortDirection.DESC else direction=SortDirection.ASC} }
 
 public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private val subject:Subject<InterestEvent> = Subject()) {
@@ -521,12 +509,12 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
         if(eager) galaxy.retrieve(order)
         //console.warn("${galaxy.descriptor.entity}.${id} order now")
         //console.log(order)
-        subject.onNext(InterestOrderEvent(this, order.copyToArray()))
+        subject.onNext(InterestOrderEvent(this, order.toTypedArray()))
     }
 
     fun retrieved(ids:Iterable<Entity>) {
         //console.log("$name RETRIEVED $ids")
-        ids.filter { val aid = it.id;  order.any {it==aid}  }.map { Tuple2(order.indexOf(it.id), it) }.forEach {
+        ids.filter { val aid = it.id;  order.any {it==aid}  }.map { Pair(order.indexOf(it.id), it) }.forEach {
             //console.log("ILOADEVT ${it.first}")
             subject.onNext(InterestLoadEvent(this, it.second, it.first))
         }
@@ -542,7 +530,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
                   val no = ArrayList<Long>()
                   no.addAll(order)
                   no.add(ae.id)
-                  onOrder(no.copyToArray())
+                  onOrder(no.toTypedArray())
                 }
             }
             "REMOVE" -> {
@@ -551,7 +539,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
                 val no = ArrayList<Long>()
                 no.addAll(order)
                 no.remove(ae.id)
-                onOrder(no.copyToArray())
+                onOrder(no.toTypedArray())
                 }
             }
         }

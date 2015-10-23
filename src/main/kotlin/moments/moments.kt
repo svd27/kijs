@@ -5,9 +5,9 @@ package moments
  */
 
 
-public native trait Moment {
-    fun format(f:String):String
+public @native interface Moment {
+    fun format(f:String):String = noImpl
 }
 
-public native fun moment() : Moment = js.noImpl
-public native fun moment(value:String, format:String) : Moment = js.noImpl
+public @native fun moment() : Moment = noImpl
+public @native fun moment(value:String, format:String) : Moment = noImpl

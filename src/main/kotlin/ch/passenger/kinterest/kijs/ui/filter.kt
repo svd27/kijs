@@ -1,35 +1,19 @@
 package ch.passenger.kinterest.kijs.ui
 
-import ch.passenger.kinterest.kijs.model.Interest
-import kotlin.js.dom.html.HTMLDivElement
-import ch.passenger.kinterest.kijs.model.PropertyDescriptor
-import ch.passenger.kinterest.kijs.forEach
-import ch.passenger.kinterest.kijs.model.EntityDescriptor
-import ch.passenger.kinterest.kijs.model.Galaxy
-import kotlin.js.dom.html.HTMLInputElement
-import ch.passenger.kinterest.kijs.model.RelationFilter
-import ch.passenger.kinterest.kijs.model.PropertyFilter
-import ch.passenger.kinterest.kijs.model.InterestOrderEvent
-import ch.passenger.kinterest.kijs.map
-import ch.passenger.kinterest.kijs.reduce
-import ch.passenger.kinterest.kijs.model.InterestLoadEvent
-import ch.passenger.kinterest.kijs.any
-import kotlin.js.dom.html.HTMLOptionElement
-import ch.passenger.kinterest.kijs.dom.KIDATAset
-import ch.passenger.kinterest.kijs.dom.*
-import kotlin.js.dom.html.HTMLElement
+import ch.passenger.kinterest.kijs.APP
 import ch.passenger.kinterest.kijs.dom.KIDATAget
 import ch.passenger.kinterest.kijs.dom.KeyboardEvent
-import org.w3c.dom.Element
-import java.util.ArrayList
-import ch.passenger.kinterest.kijs.model.Entity
-import rx.js.Subject
-import rx.js.Disposable
-import org.w3c.dom.events.Event
 import ch.passenger.kinterest.kijs.filter
-import ch.passenger.kinterest.kijs.makeString
-import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.model.EntityState
+import ch.passenger.kinterest.kijs.forEach
+import ch.passenger.kinterest.kijs.map
+import ch.passenger.kinterest.kijs.model.*
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.events.Event
+import rx.js.Disposable
+import rx.js.Subject
+import java.util.*
+
 
 /**
  * Created by svd on 10/01/2014.
@@ -100,11 +84,11 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
       }
 
     var createFilter : (String)->String = {
-        (pre) ->
-        projections.map { "$it ~= \"$pre.*\"" }.makeString(" or ")
+        pre ->
+        projections.map { "$it ~= \"$pre.*\"" }.joinToString(" or ")
     }
 
-    {
+    init {
         this.onReady { build() }
     }
 

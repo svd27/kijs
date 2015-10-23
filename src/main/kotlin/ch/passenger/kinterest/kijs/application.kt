@@ -25,8 +25,8 @@ import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.diaries.OverviewPanel
 import ch.passenger.kinterest.kijs.style.CSSExporter
 import ch.passenger.kinterest.kijs.style.StyleManagerView
-import kotlin.js.dom.html.document
-import kotlin.js.dom.html.window
+import kotlin.browser.document
+import kotlin.browser.window
 
 
 /**
@@ -42,13 +42,13 @@ open class Application(val base: String, val ssl:Boolean) : Disposable {
     val HTTP : String
     val WS : String
 
-    {
+    init {
 
         setKIData(APPKEY, this)
         console.log(document.baseURI)
     }
 
-    {
+    init {
         APP = this
         HTTP = if(ssl) "https://" else "http://"
         WS = if(ssl) "wss://" else "ws://"
@@ -62,7 +62,7 @@ open class Application(val base: String, val ssl:Boolean) : Disposable {
     fun getKIData(name:String) : Any? = document?.kidata?.get(name)
 
     var session: Int = -1
-    {
+    init {
         val req = Ajax("${APP!!.HTTP}$base")
         req.asObservabe().subscribe {
             val json = JSON.parse<Json>(it)
@@ -165,7 +165,7 @@ class DiariesApp(base:String, ssl:Boolean) : Application(base, ssl) {
         tabber.addTab(Tab(Span{textContent="CSS Sheets"}, StyleManagerView()))
         tabber.addTab(Tab(Span{textContent="CSS"}, CSSExporter()))
         root + tabber
-        bl.item(0).appendChild(root.root)
+        bl.item(0)!!.appendChild(root.root)
     }
 }
 

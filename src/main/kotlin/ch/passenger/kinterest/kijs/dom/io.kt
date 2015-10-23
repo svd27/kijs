@@ -14,16 +14,16 @@ import rx.js.AsyncSubject
  * Created by svd on 07/01/2014.
  */
 
-native public public class XMLHttpRequest() {
-    public fun open(method : String, url : String, async : Boolean = true, user : String? = null, password : String? = null  ) : Unit = js.noImpl
+@native public class XMLHttpRequest() {
+    public fun open(method : String, url : String, async : Boolean = true, user : String? = null, password : String? = null  ) : Unit = noImpl
 
-    public native var onreadystatechange : () -> Unit = js.noImpl
-    public native var responseText : String = js.noImpl
-    public native var statusText : String = js.noImpl
-    public native var readyState : Short = js.noImpl
-    public native fun send() : Unit = js.noImpl
-    public native fun send(msg : String) : Unit = js.noImpl
-    public native fun setRequestHeader(name : String, value : String) :Unit = js.noImpl
+    public @native var onreadystatechange : () -> Unit = noImpl
+    public @native var responseText : String = noImpl
+    public @native var statusText : String = noImpl
+    public @native var readyState : Short = noImpl
+    public @native fun send() : Unit = noImpl
+    public @native fun send(msg : String) : Unit = noImpl
+    public @native fun setRequestHeader(name : String, value : String) :Unit = noImpl
 }
 
 class Ajax(val url:String, val method:String="GET") {
@@ -63,14 +63,14 @@ class Ajax(val url:String, val method:String="GET") {
     }
 }
 
-native trait ProgressEvent : Event {
-    native val lengthComputable : Boolean
-    native val loaded : Long
-    native val total : Long
+@native class ProgressEvent : Event("progress") {
+    @native val lengthComputable : Boolean
+    @native val loaded : Long
+    @native val total : Long
 }
 
-public native class WebSocket(val url : String) {
-    val readyState : Int = js.noImpl
+public @native class WebSocket(val url : String) {
+    val readyState : Int = noImpl
     var onclose : (e : MessageEvent) -> Unit = noImpl
     var onerror : (e : MessageEvent) -> Unit = noImpl
     var onmessage : (e : MessageEvent) -> Unit = noImpl
@@ -82,7 +82,7 @@ public native class WebSocket(val url : String) {
 
 public class SocketObservable(val url:String, val subject : Subject<MessageEvent> = Subject())  {
     val ws : WebSocket = WebSocket(url);
-    {
+    init {
         console.log("init socket $url")
         console.log(ws)
       ws.onclose = { subject.onNext(it); subject.onCompleted()}

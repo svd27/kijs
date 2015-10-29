@@ -64,9 +64,9 @@ class Ajax(val url:String, val method:String="GET") {
 }
 
 @native class ProgressEvent : Event("progress") {
-    @native val lengthComputable : Boolean
-    @native val loaded : Long
-    @native val total : Long
+    @native val lengthComputable : Boolean = noImpl
+    @native val loaded : Long = noImpl
+    @native val total : Long = noImpl
 }
 
 public @native class WebSocket(val url : String) {

@@ -33,7 +33,7 @@ interface  Output {
 }
 
 @native class MessageEvent : org.w3c.dom.events.Event("message") {
-    val data: String
+    val data: String = noImpl
 }
 
 @native interface DOMTokenList {
@@ -62,7 +62,7 @@ public @native fun KIStyle(e: HTMLElement, name: String): String = noImpl
 @native fun EventTarget.addEventListener(kind: String, cb: (Event) -> Unit, capture: Boolean = false) : Unit = noImpl
 
 @native class KeyboardEvent : Event("keyboard") {
-    val keyCode: Long
+    val keyCode: Long = noImpl
 }
 
 

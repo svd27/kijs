@@ -234,7 +234,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
     var commitRenderer : CommitRenderer? = null
 
     fun update(e:Entity) {
-        if(e.id!=entity.id) return
+        if(e!=entity) return
         updaters.forEach { it(e) }
     }
 
@@ -264,7 +264,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
         }
     }
 
-    override fun initialise(node:HTMLDivElement) {
+    override fun initialise(n:HTMLDivElement) {
         val desc = interest.galaxy.descriptor
         val that = this
         val en = entity

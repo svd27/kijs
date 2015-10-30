@@ -39,7 +39,11 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             that.table!!.createColumns()
             that.labels.keys.forEach {
                 lbl ->
-                that.table?.label(lbl, that.labels[it]!!)
+                if(that.labels.containsKeyRaw(it)) {
+                    that.table?.label(lbl, that.labels[it]!!)
+                } else {
+                    console.warn("did not find label $it in $labels")
+                }
             }
 
             that.table?.addActions {

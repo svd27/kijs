@@ -106,12 +106,12 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
         updateHook(this)
     }
 
-    public fun get(p:String) : Any? {
+    public operator fun get(p:String) : Any? {
         if(written.containsKey(p)) return written[p]
         return values[p]
     }
 
-    public fun set(p:String, v:Any?) {
+    public operator fun set(p:String, v:Any?) {
         wroteOn[p] = values[p]
         written[p] = v
         val pd = descriptor.properties[p]!!
@@ -144,7 +144,7 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 
     fun collect() : Json {
         val jv = JSON.parse<Json>("{}")
-        written.keySet().forEach {
+        written.keys.forEach {
             jv.set(it, descriptor.properties[it]?.serialise(written[it]))
         }
         val je = JSON.parse<Json>("{}")

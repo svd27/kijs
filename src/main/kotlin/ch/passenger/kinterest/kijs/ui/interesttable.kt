@@ -174,7 +174,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                         when(r ) {
                                             is EntityRendererEditor<*> -> {
                                                 val re = r.entity
-                                                if (re==null || (entity !=null && re.id != entity.id)) r.entity = entity else r.update()
+                                                if (re==null || (entity !=null && re != entity)) r.entity = entity else r.update()
                                             }
                                             else -> r?.update()
                                         }

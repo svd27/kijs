@@ -302,8 +302,8 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
         req.start(pars)
     }
 
-    fun get(id:Long) : Entity = if(heaven.containsKey(id)) heaven.get(id)!! else {subRetriever.onNext(id); NOTLOADED; }
-    fun contains(id:Long) = heaven.containsKey(id)
+    operator fun get(id:Long) : Entity = if(heaven.containsKey(id)) heaven.get(id)!! else {subRetriever.onNext(id); NOTLOADED; }
+    operator fun contains(id:Long) = heaven.containsKey(id)
 
     fun consume(ev:ServerInterestEvent) {
         if(ev is ServerInterestOrderEvent) {
@@ -514,7 +514,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
 
     fun retrieved(ids:Iterable<Entity>) {
         //console.log("$name RETRIEVED $ids")
-        ids.filter { val aid = it.id;  order.any {it==aid}  }.map { Pair(order.indexOf(it.id), it) }.forEach {
+        ids.filter { val aid = it.id;  order.contains(aid)}.map { Pair(order.indexOf(it.id), it) }.forEach {
             //console.log("ILOADEVT ${it.first}")
             subject.onNext(InterestLoadEvent(this, it.second, it.first))
         }

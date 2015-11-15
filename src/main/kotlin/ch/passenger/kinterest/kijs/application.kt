@@ -1,32 +1,16 @@
 package ch.passenger.kinterest.kijs
 
-import ch.passenger.kinterest.kijs.dom.Ajax
-import ch.passenger.kinterest.kijs.dom.SocketObservable
-import ch.passenger.kinterest.kijs.dom.*
-import ch.passenger.kinterest.kijs.model.EntityDescriptor
-import ch.passenger.kinterest.kijs.model.Galaxy
-import ch.passenger.kinterest.kijs.model.ALL
-import ch.passenger.kinterest.kijs.model.PropertyFilter
-import ch.passenger.kinterest.kijs.ui.UniverseMenu
-import ch.passenger.kinterest.kijs.ui.Div
-import ch.passenger.kinterest.kijs.model.ServerEvent
-import ch.passenger.kinterest.kijs.model.ServerInterestOrderEvent
-import ch.passenger.kinterest.kijs.dom.MessageEvent
-import ch.passenger.kinterest.kijs.model.ServerInterestEvent
-import java.util.HashMap
-import rx.js.Disposable
-import java.util.HashSet
-import ch.passenger.kinterest.kijs.model.JsonEntity
-import ch.passenger.kinterest.kijs.model.Entity
-import ch.passenger.kinterest.kijs.model.ServerEntityEvent
-import ch.passenger.kinterest.kijs.ui.Tabber
-import ch.passenger.kinterest.kijs.ui.Tab
-import ch.passenger.kinterest.kijs.ui.Span
 import ch.passenger.kinterest.kijs.diaries.OverviewPanel
+import ch.passenger.kinterest.kijs.dom.*
+import ch.passenger.kinterest.kijs.model.*
 import ch.passenger.kinterest.kijs.style.CSSExporter
 import ch.passenger.kinterest.kijs.style.StyleManagerView
+import ch.passenger.kinterest.kijs.ui.*
+import rx.js.Disposable
+import java.util.*
 import kotlin.browser.document
 import kotlin.browser.window
+
 
 
 /**
@@ -59,7 +43,7 @@ open class Application(val base: String, val ssl:Boolean) : Disposable {
         document.kidata?.set(name, value)
     }
 
-    fun getKIData(name:String) : Any? = document?.kidata?.get(name)
+    fun getKIData(name:String) : Any? = document.kidata?.get(name)
 
     var session: Int = -1
     init {

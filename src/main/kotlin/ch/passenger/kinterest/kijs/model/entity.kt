@@ -144,7 +144,7 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 
     fun collect() : Json {
         val jv = JSON.parse<Json>("{}")
-        written.keySet().forEach {
+        written.keys.forEach {
             jv.set(it, descriptor.properties[it]?.serialise(written[it]))
         }
         val je = JSON.parse<Json>("{}")
@@ -299,8 +299,8 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
         req.start(pars)
     }
 
-    fun get(id:String) : Entity = if(id in heaven) heaven[id]!! else {subRetriever.onNext(id); NOTLOADED; }
-    fun contains(id:String) = id in heaven
+    operator fun get(id:String) : Entity = if(id in heaven) heaven[id]!! else {subRetriever.onNext(id); NOTLOADED; }
+    operator fun contains(id:String) = id in heaven
 
     fun consume(ev:ServerInterestEvent) {
         if(ev is ServerInterestOrderEvent) {
@@ -511,7 +511,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
 
     fun retrieved(ids:Iterable<Entity>) {
         //console.log("$name RETRIEVED $ids")
-        ids.filter { val aid = it.id;  order.any {it==aid}  }.map { Pair(order.indexOf(it.id), it) }.forEach {
+        ids.filter { it.id in order}.map { Pair(order.indexOf(it.id), it) }.forEach {
             //console.log("ILOADEVT ${it.first}")
             subject.onNext(InterestLoadEvent(this, it.second, it.first))
         }

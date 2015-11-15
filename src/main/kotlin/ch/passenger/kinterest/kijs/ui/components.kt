@@ -2,14 +2,14 @@ package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.Universe
 import ch.passenger.kinterest.kijs.dom.*
-import kotlin.js.dom.html.HTMLDivElement
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.Element
-import kotlin.js.dom.html.document
+import kotlin.browser.document
 import ch.passenger.kinterest.kijs.forEach
 import rx.js.Disposable
 import java.util.HashSet
 import ch.passenger.kinterest.kijs.model.Interest
-import kotlin.js.dom.html.HTMLElement
+import org.w3c.dom.HTMLElement
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.PropertyDescriptor
 import ch.passenger.kinterest.kijs.model.EntityDescriptor
@@ -33,7 +33,7 @@ import ch.passenger.kinterest.kijs.model.SortDirection
 import ch.passenger.kinterest.kijs.any
 import ch.passenger.kinterest.kijs.firstThat
 import org.w3c.dom.events.MouseEvent
-import ch.passenger.kinterest.kijs.to
+
 import kotlin.js.dom.html.HTMLSelectElement
 import ch.passenger.kinterest.kijs.model.EntityTemplate
 
@@ -191,12 +191,12 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
 
 
 abstract class EntityEditor<T:HTMLElement>(val interest:Interest, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name) {
-    private var eid : Long = -1
+    private var eid : String = ""
     var entity : Entity?
-      get() = if(eid>=0) interest.entity(eid) else null
-      set(v) {if(v?.id!=eid) {eid=v?.id?:-1; update()} }
+      get() = if(eid.isNotEmpty()) interest.entity(eid) else null
+      set(v) {if(v?.id!=eid) {eid=v?.id?:""; update()} }
 
-    {
+    init {
         disposables.add(interest.on {
             when(it) {
 
@@ -212,8 +212,8 @@ abstract class EntityEditor<T:HTMLElement>(val interest:Interest, id:String=Base
 open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     var entity:Entity=if(creator) EntityTemplate(interest.galaxy.descriptor) else interest.galaxy.NOTLOADED
         set(v) {
-            if($entity.id!=v.id) {
-                $entity = v
+            if(field.id!=v.id) {
+                field = v
                 if(creator) {
                     v.descriptor.properties.values().forEach {
                         if(it.floaty && v[it.property]==null) {
@@ -234,11 +234,11 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
     var commitRenderer : CommitRenderer? = null
 
     fun update(e:Entity) {
-        if(e.id!=entity.id) return
+        if(e!=entity) return
         updaters.forEach { it(e) }
     }
 
-    {
+    init {
         val e = entity
         if(e is EntityTemplate && creator) e.updateHook = {update(it)}
         if(creator) {
@@ -255,7 +255,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
 
     }
 
-    {
+    init {
         interest.on {
             when(it) {
                 is InterestUpdateEvent -> update(it.entity)
@@ -264,7 +264,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
         }
     }
 
-    override fun initialise(node:HTMLDivElement) {
+    override fun initialise(n:HTMLDivElement) {
         val desc = interest.galaxy.descriptor
         val that = this
         val en = entity

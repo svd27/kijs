@@ -3,31 +3,31 @@ package ch.passenger.kinterest.kijs.model
 /**
  * Created by svd on 08/01/2014.
  */
-public trait ServerEvent {
+public interface ServerEvent {
     val kind : String
 }
 
-public trait ServerEntityEvent : ServerEvent {
+public interface ServerEntityEvent : ServerEvent {
     val sourceType : String
 }
 
-public trait ServerInterestEvent : ServerEntityEvent {
+public interface ServerInterestEvent : ServerEntityEvent {
     val interest : Int
 }
 
-public trait ServerInterestOrderEvent : ServerInterestEvent {
-    val order : Array<Long>
+public interface ServerInterestOrderEvent : ServerInterestEvent {
+    val order : Array<String>
 }
 
-public trait ServerInterestAddEvent : ServerInterestEvent {
-    val id : Long
+public interface ServerInterestAddEvent : ServerInterestEvent {
+    val id : String
 }
 
-public trait ServerInterestRemoveEvent : ServerInterestEvent {
-    val id : Long
+public interface ServerInterestRemoveEvent : ServerInterestEvent {
+    val id : String
 }
 
-public trait ServerInterestConfigEvent : ServerInterestEvent {
+public interface ServerInterestConfigEvent : ServerInterestEvent {
     val estimatedsize : Int
     val currentsize : Int
     val offset : Int
@@ -35,15 +35,15 @@ public trait ServerInterestConfigEvent : ServerInterestEvent {
     val orderBy : Array<Json>
 }
 
-public trait ServerEntityUpdateEvent : ServerEntityEvent {
+public interface ServerEntityUpdateEvent : ServerEntityEvent {
     val property : String
-    val id:Long
+    val id:String
     val value:Any?
     val old:Any?
 }
 
-public trait JsonEntity {
+public interface JsonEntity {
     val entity : String
-    val id : Long
+    val id : String
     val values : Json
 }

@@ -1,7 +1,9 @@
 package ch.passenger.kinterest.kijs.ui
 
-import kotlin.js.dom.html.HTMLTableElement
-import kotlin.js.dom.html.*
+import org.w3c.dom.HTMLTableCellElement
+import org.w3c.dom.HTMLTableElement
+import org.w3c.dom.HTMLTableRowElement
+import org.w3c.dom.HTMLTableSectionElement
 import java.util.ArrayList
 
 /**
@@ -92,12 +94,12 @@ open class TableRow(id:String=BaseComponent.id()) : Tag<HTMLTableRowElement>("tr
 abstract class AbstractTableCell(name:String, id:String=BaseComponent.id()) : FlowContainer<HTMLTableCellElement>(name, id) {
     var renderer:CellRendererEditor? = null
     set(v) {
-        val r = $renderer
+        val r = field
         if(r is BaseComponent<*>) {
             r.remove()
             r.dispose()
         }
-        $renderer = v
+        field = v
         if(v is BaseComponent<*>) {
             plus(v)
         }
@@ -108,6 +110,6 @@ abstract class AbstractTableCell(name:String, id:String=BaseComponent.id()) : Fl
 open class TableCell(id:String=BaseComponent.id()) : AbstractTableCell("td", id)
 open class TableHeaderCell(id:String=BaseComponent.id()) : AbstractTableCell("th", id)
 
-trait CellRendererEditor {
+interface CellRendererEditor {
     fun update()
 }

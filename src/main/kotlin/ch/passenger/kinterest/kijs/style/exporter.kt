@@ -1,7 +1,5 @@
 package ch.passenger.kinterest.kijs.style
 
-import kotlin.js.dom.html.HTMLDivElement
-import kotlin.js.dom.html.document
 import ch.passenger.kinterest.kijs.dom.*
 import ch.passenger.kinterest.kijs.ui.Component
 import ch.passenger.kinterest.kijs.ui.SelectOne
@@ -9,16 +7,21 @@ import ch.passenger.kinterest.kijs.ui.TableBody
 import ch.passenger.kinterest.kijs.forEach
 import ch.passenger.kinterest.kijs.model.ALL
 import ch.passenger.kinterest.kijs.APP
-import kotlin.js.dom.html.HTMLElement
 import ch.passenger.kinterest.kijs.model.EntityTemplate
 import ch.passenger.kinterest.kijs.ui.TextInput
 import ch.passenger.kinterest.kijs.ui.InterestTable
 import ch.passenger.kinterest.kijs.model.InterestLoadEvent
-import kotlin.js.dom.html.HTMLInputElement
 import ch.passenger.kinterest.kijs.model.Entity
 import ch.passenger.kinterest.kijs.model.EntityState
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.css.CSSStyleRule
+import org.w3c.dom.css.CSSStyleSheet
+import org.w3c.dom.css.StyleSheet
 import java.util.HashMap
-import kotlin.js.lastIndexOf
+import kotlin.browser.document
+
 
 /**
  * Created by svd on 18/01/2014.
@@ -37,7 +40,7 @@ class CSSExporter() : Component<HTMLDivElement>() {
             val that = this
             document.styleSheets.forEach {
                 if(it.href!=null)
-                that.option(it.href, it.href.substring(it.href.lastIndexOf("/")..it.href.length)) {}
+                that.option(it.href!!, it.href!!.substring(it.href!!.lastIndexOf("/")..it.href!!.length)) {}
             }
             selected = 0
         }
@@ -86,7 +89,7 @@ class CSSExporter() : Component<HTMLDivElement>() {
                     click {
                         val id = sel.selectedValue
                         if(id!=null) {
-                            val sheet = that.gs.get(safeParseInt(id) as Long)
+                            val sheet = that.gs.get(id)
                             if(sheet.state==EntityState.LOADED) {
                                 that.export(sheet)
                             }
@@ -128,24 +131,24 @@ class CSSExporter() : Component<HTMLDivElement>() {
         val that = this
         document.styleSheets.forEach {
             if(it.href==sel) {
-                it.cssRules.forEach {
+                (it as CSSStyleSheet).cssRules.forEach {
                     val rule = it
                     tbl?.tr {
                         td {
                             checkbox {}
                         }
                         td {
-                            textContent = rule.selectorText
+                            textContent = rule.cssText
                         }
                         td {
-                            if(rule.`type` == 1) {
+                            if(rule.`type` == 1.toShort()) {
                                 val style = rule as CSSStyleRule
                                 textContent = style.style.cssText
                             }
                         }
                         td {
                             val td = this
-                            if(rule.`type` == 1) {
+                            if(rule.`type` == 1.toShort()) {
                                 val style = rule as CSSStyleRule
                                 td.table {
                                     val t =this
@@ -159,7 +162,7 @@ class CSSExporter() : Component<HTMLDivElement>() {
                                     t.body {
                                         val b = this
                                         style.style.forEach {
-                                            (n,v) -> b.tr {
+                                            n,v -> b.tr {
                                             td {textContent = n}
                                             td {textContent = v}
                                         }
@@ -221,7 +224,7 @@ class CSSExporter() : Component<HTMLDivElement>() {
             if(chk) {
                 val selector = r.cells[1].textContent
                 val css = r.cells[2].textContent
-                gs.call(sheet.id, "addRule", array(selector, css), {})
+                gs.call(sheet.id, "addRule", arrayOf(selector, css), {})
                 r.remove()
             }
         }

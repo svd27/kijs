@@ -3,8 +3,8 @@ package ch.passenger.kinterest.kijs
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.HashSet
-import kotlin.js.dom.html.HTMLOptionsCollection
-import kotlin.js.dom.html.HTMLOptionElement
+import org.w3c.dom.HTMLOptionsCollection
+import org.w3c.dom.HTMLOptionElement
 import org.w3c.dom.NodeList
 import org.w3c.dom.Node
 
@@ -150,18 +150,23 @@ fun<T,U> Array<T>.reduce(initial:U,cb: (U,T)->U) : U {
     return res
 }
 
-fun<K,V> mapOf(ps:Iterable<Tuple2<K,V>>) : Map<K,V> {
+
+fun<K,V> mapOf(ps:Iterable<Pair<K,V>>) : Map<K,V> {
     val m = HashMap<K,V>()
     ps.forEach { m.put(it.first, it.second) }
     return m
 }
 
-fun<K,V> mapOf(vararg ps:Tuple2<K,V>) : Map<K,V> {
+/*
+fun<K,V> mapOf(vararg ps:Pair<K,V>) : Map<K,V> {
     val m = HashMap<K,V>()
-    ps.forEach { m.put(it.first, it.second) }
+    ps.forEach { it -> when(it) {
+       is Pair<*,*> -> m.put(it.first as K, it.second as V)
+    }
+    }
     return m
 }
-
+*/
 /*
 fun<T> setOf(vararg ts:T) : Set<T> {
     val s = HashSet<T>()
@@ -197,13 +202,14 @@ fun<T> Iterable<T>.makeString(sep:String="", prefix:String="", postFix:String=""
 
 fun<T> Array<T>.makeString(sep:String="", prefix:String="", postFix:String="") :String {
     val b = this.reduce(StringBuilder()) {
-        (init, next) ->
+        init, next ->
         if(init.toString().size>0) init.append("$sep$next")
         else init.append("$next")
     }
     return "$prefix$b$postFix"
 }
 
+/*
 public class Tuple2<A, B> (
         public val first: A,
         public val second: B
@@ -231,6 +237,7 @@ fun Int.to(n:Int) : Iterable<Int> {
     }
     return res
 }
+*/
 
 fun HTMLOptionsCollection.forEach(cb:(HTMLOptionElement)->Unit) {
     for(i in 0..(this.length.toInt()-1)) cb(item(i) as HTMLOptionElement)
@@ -249,26 +256,26 @@ fun HTMLOptionsCollection.indexWhere(cb:(HTMLOptionElement)->Boolean) : Int {
 
 fun NodeList.filter(cb:(Node)->Boolean) : Iterable<Node> {
     val fl = ArrayList<Node>()
-    for(i in 0..(this.length-1)) if(cb(item(i))) fl.add(item(i))
+    for(i in 0..(this.length-1)) if(cb(item(i)!!)) fl.add(item(i)!!)
     return fl
 }
 
 fun NodeList.forEach(cb:(Node)->Unit) {
     var i = 0
     while(i<length) {
-        cb(item(i))
+        cb(item(i)!!)
         i++
     }
 }
 
 fun NodeList.any(cb:(Node)->Boolean) : Boolean {
-    for(i in 0..(this.length-1)) if(cb(item(i))) return  true
+    for(i in 0..(this.length-1)) if(cb(item(i)!!)) return  true
     return false
 }
 
 fun<T> NodeList.map(cb:(Node)->T) : Iterable<T> {
     val res = ArrayList<T>()
-    for(i in 0..(this.length-1)) res.add(cb(item(i)))
+    for(i in 0..(this.length-1)) res.add(cb(item(i)!!))
     return res
 }
 

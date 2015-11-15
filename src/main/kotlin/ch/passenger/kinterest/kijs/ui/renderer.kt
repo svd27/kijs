@@ -1,10 +1,9 @@
 package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.*
-import ch.passenger.kinterest.kijs.dom.*
 import ch.passenger.kinterest.kijs.*
 import moments.*
-import kotlin.js.dom.html.*
+import org.w3c.dom.*
 import rx.js.*
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.events.Event
@@ -14,7 +13,7 @@ import java.util.ArrayList
  * Created by svd on 10/01/2014.
  */
 abstract class EntityRendererEditor<T:HTMLElement>(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name), CellRendererEditor {
-    private var eid : Long? = null
+    private var eid : String? = null
     var create : Entity? = null
     var entity: Entity?
         get() = if(creator) create else interest.galaxy.heaven[eid]
@@ -96,7 +95,7 @@ class CommitRenderer(interest:Interest, creator: Boolean = false, id:String=Base
     var save: Anchor? = null
     var cancel: Anchor? = null
     var alwaysCancel : Boolean = false
-      get() = $alwaysCancel || creator
+      get() = field || creator
 
 
     override fun wants(ev: InterestUpdateEvent): Boolean = entity?.id == ev.entity.id
@@ -142,16 +141,16 @@ open class PropertyRendererEditor(val property: String, intererst: Interest, cre
     var rendererOnly: Boolean = false
         get()  {
             return if(creator) {
-                $rendererOnly
+                field
             } else {
-                $rendererOnly || pd.readonly
+                field || pd.readonly
             }
         }
         set(v) {
-            $rendererOnly = v
+            field = v
         }
     var editorOnly: Boolean = false
-        get() = $editorOnly && !rendererOnly
+        get() = field && !rendererOnly
     open var renderer: Tag<*> = Span() { }
     private var theeditor :Tag<*> = TextInput()
     open fun editor(): Tag<*> = theeditor
@@ -329,7 +328,7 @@ open class PropertyRendererEditor(val property: String, intererst: Interest, cre
 
     override fun wants(ev: InterestUpdateEvent): Boolean = ev.property == property
 
-    class object {
+    companion  object {
         fun bestFor(interest: Interest, property: String, creator:Boolean=false): PropertyRendererEditor {
             console.log("BEST $property")
             val pd = interest.galaxy.descriptor.properties[property]!!
@@ -444,7 +443,7 @@ class TextAreaEdit(property: String, interest: Interest, creator:Boolean=false) 
     private val ta = TextArea()
     override fun editor(): Tag<out HTMLElement> = ta
 
-    {
+    init {
         editorOnly = true
     }
 
@@ -474,7 +473,7 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
     private var targetGalaxy : Galaxy = ALL.galaxies[targetEntity]!!
     var completer : CustomCompleter = CustomCompleter(targetGalaxy, createProjections(), findLabel())
     private var adiv : Div = Div();
-    {adiv.plus(completer); completer.silent = true}
+    init {adiv.plus(completer); completer.silent = true}
     override fun editor() : Tag<out HTMLElement> = adiv
 
     fun createProjections(): Array<String> {
@@ -494,9 +493,9 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
     }
 
 
-    val label : String;
+    val label : String
 
-    {
+    init {
         label = targetGalaxy.descriptor.properties.values().firstThat { it.label }?.property?:"";
         console.log("label $label")
     }
@@ -535,14 +534,14 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
         addClass("editing")
         console.log("completer $id show: list#${completer.list.id}")
         editor().show()
-        completer?.silent=false
+        completer.silent =false
     }
 
 
     override fun hideEditor() {
         removeClass("editing")
         editor().hide()
-        completer?.silent=true
+        completer.silent =true
     }
     override fun str(): String {
         val e = entity
@@ -568,9 +567,9 @@ class HeaderRenderer(val interest: Interest, val property: String, var label: St
                     val ex = that.interest.orderBy.firstThat { it.property == that.property }
                     if(ex is SortKey) {
                         ex.toggle()
-                        that.interest.sort(array(ex))
+                        that.interest.sort(arrayOf(ex))
                     } else {
-                        that.interest.sort(array(SortKey(that.property, SortDirection.ASC)))
+                        that.interest.sort(arrayOf(SortKey(that.property, SortDirection.ASC)))
                     }
                 }
             } else {
@@ -580,7 +579,7 @@ class HeaderRenderer(val interest: Interest, val property: String, var label: St
                 } else {
                     that.interest.orderBy.add(SortKey(that.property, SortDirection.ASC))
                 }
-                that.interest.sort(that.interest.orderBy.copyToArray())
+                that.interest.sort(that.interest.orderBy.toTypedArray())
             }
         }
 

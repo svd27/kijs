@@ -1,10 +1,9 @@
 package ch.passenger.kinterest.kijs.ui
 
 import ch.passenger.kinterest.kijs.model.*
-import kotlin.js.dom.html.*
 import rx.js.Subject
 import ch.passenger.kinterest.kijs.*
-import ch.passenger.kinterest.kijs.dom.*
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.events.MouseEvent
 import rx.js.Disposable
 import java.util.HashMap
@@ -21,16 +20,16 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
     var tableBody: TableBody? = null
     val columns: MutableMap<String, InterestTableColumn> = HashMap()
     val colorder: MutableList<String> = ArrayList()
-    private val selection : MutableSet<Long> = HashSet()
-    public  val selected : Set<Long> get() = selection
-    val selector : Subject<Iterable<Long>> = Subject()
+    private val selection : MutableSet<String> = HashSet()
+    public  val selected : Set<String> get() = selection
+    val selector : Subject<Iterable<String>> = Subject()
     var offset : Int = interest.offset
     var committer : Boolean = false
       set(v) {
-          $committer = v
+          field = v
           if(v) {
               colorder.add("commit")
-              val cr = {(it:Interest) -> console.log("COMMIT"); CommitRenderer(it)}
+              val cr = {it:Interest -> console.log("COMMIT"); CommitRenderer(it)}
               columns["commit"] = InterestTableColumn("commit", interest, cr)
           }
       }
@@ -53,8 +52,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         columns[col]?.headerRenderer?.label = label
     }
 
-    fun onSelection(cb:(Iterable<Long>)->Unit) : Disposable = selector.subscribe(cb)
-    fun setSelection(sel:Iterable<Long>) {
+    fun onSelection(cb:(Iterable<String>)->Unit) : Disposable = selector.subscribe(cb)
+    fun setSelection(sel:Iterable<String>) {
         val nsel = setOf(sel)
         if(nsel.same(selection)) return
         selection.clear()
@@ -63,7 +62,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         tableBody?.rows?.forEach {
             val de = it.data("entity")
             if(de !=null) {
-                val aid = safeParseInt(de) as Long
+                val aid = de
                 if(sel.any { it==aid }) it.addClass("selected")
                 else it.removeClass("selected")
             } else it.removeClass("selected")
@@ -115,7 +114,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                         val tr = this
                                         data("order", "$idx")
                                         on("click") {
-                                            val oldsel = HashSet<Long>()
+                                            val oldsel = HashSet<String>()
                                             oldsel.addAll(that.selection)
                                             val e = it as MouseEvent
                                             val ord = tr.data("order")
@@ -173,7 +172,10 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                     row.cells.forEach {
                                         val r = it.renderer
                                         when(r ) {
-                                            is EntityRendererEditor<*> -> if (r.entity?.id != entity?.id) r.entity = entity else r.update()
+                                            is EntityRendererEditor<*> -> {
+                                                val re = r.entity
+                                                if (re==null || (entity !=null && re != entity)) r.entity = entity else r.update()
+                                            }
                                             else -> r?.update()
                                         }
                                     }

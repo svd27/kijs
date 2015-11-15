@@ -10,8 +10,6 @@ import ch.passenger.kinterest.kijs.dom.*
 import ch.passenger.kinterest.kijs.model.InterestUpdateEvent
 import ch.passenger.kinterest.kijs.ui.BaseComponent
 import ch.passenger.kinterest.kijs.ui.Component
-import kotlin.js.dom.html.HTMLDivElement
-import kotlin.js.dom.html.document
 import ch.passenger.kinterest.kijs.ui.InterestTable
 import ch.passenger.kinterest.kijs.map
 import ch.passenger.kinterest.kijs.makeString
@@ -22,14 +20,16 @@ import ch.passenger.kinterest.kijs.ui.EntityEditor
 import ch.passenger.kinterest.kijs.ui.GenericEntityEditor
 import ch.passenger.kinterest.kijs.ui.TextInput
 import ch.passenger.kinterest.kijs.firstThat
-import kotlin.js.dom.html.HTMLElement
 import ch.passenger.kinterest.kijs.model.Interest
-import ch.passenger.kinterest.kijs.dom.StyleSheet
-import ch.passenger.kinterest.kijs.dom.CSSStyleRule
 import ch.passenger.kinterest.kijs.model.EntityState
 import ch.passenger.kinterest.kijs.ui.Label
 import ch.passenger.kinterest.kijs.ui.CompleterRenderEdit
 import ch.passenger.kinterest.kijs.ui.CustomCompleter
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.css.CSSStyleRule
+import org.w3c.dom.css.CSSStyleSheet
+import org.w3c.dom.css.StyleSheet
+import kotlin.browser.document
 
 /**
  * Created by svd on 19/01/2014.
@@ -37,12 +37,12 @@ import ch.passenger.kinterest.kijs.ui.CustomCompleter
 class StyleManager(val esheet:Entity) {
     private val gsheet = ALL.galaxies["CSSStylesheet"]!!
     private val grule = ALL.galaxies["CSSStyleRule"]!!
-    private val ruleMap : MutableMap<Long,Int> = HashMap();
+    private val ruleMap : MutableMap<String,Int> = HashMap();
     private var islive = false
-    private var sheet :StyleSheet? = null
+    private var sheet : CSSStyleSheet? = null
     private var interest : Interest? = null;
 
-    {
+   init {
         val that = this
         ALL.galaxies["CSSProperty"]!!.create("${esheet["name"]}properties") {
             interest = it
@@ -54,7 +54,7 @@ class StyleManager(val esheet:Entity) {
                     when(ev) {
                         is InterestOrderEvent -> {
                             ev.order.forEach {
-                                that.gsheet.call(that.esheet.id, "getRules", array(array(it)), { (it:String) ->
+                                that.gsheet.call(that.esheet.id, "getRules", arrayOf(arrayOf(it)), { it:String ->
                                     console.log("#####GET RULE#####")
                                     console.log(it)
                                     if(that.islive)
@@ -63,8 +63,8 @@ class StyleManager(val esheet:Entity) {
                             }
                         }
                         is InterestUpdateEvent -> {
-                            that.gsheet.call(that.esheet.id, "getRules", array(array(ev.entity.id)), {
-                                (it:String) ->
+                            that.gsheet.call(that.esheet.id, "getRules", arrayOf(arrayOf(ev.entity.id)), {
+                                it:String ->
                                 console.log("#####GET RULE#####")
                                 console.log(it)
                                 if(that.islive)
@@ -86,12 +86,12 @@ class StyleManager(val esheet:Entity) {
         document.getElementsByTagName("head").forEach {
             it.appendChild(style)
         }
-        sheet = document.styleSheets.item(document.styleSheets.length-1)
+        sheet = document.styleSheets.item(document.styleSheets.length-1) as CSSStyleSheet
         console.log("new sheet")
         console.log(sheet?:"???")
 
-        gsheet.call(esheet.id, "getRules", array(interest?.order), {
-            (it:String) ->
+        gsheet.call(esheet.id, "getRules", arrayOf(interest?.order), {
+            it:String ->
             console.log("#####GET RULE#####")
             console.log(it)
             updateRules(it)
@@ -105,10 +105,10 @@ class StyleManager(val esheet:Entity) {
             console.error("error")
             console.error(js)
         }
-        val la = js.get("result") as Array<Long>
+        val la = js.get("result") as Array<String>
         la.forEach {
             val rid = it
-            grule.call(rid, "getCSS", array(), {
+            grule.call(rid, "getCSS", arrayOf(), {
                 console.log("$rid: $it")
                 val res = JSON.parse<Json>(it)
                 updateRule(rid, res.get("result").toString())
@@ -116,7 +116,7 @@ class StyleManager(val esheet:Entity) {
         }
     }
 
-    fun updateRule(rid:Long, css:String) {
+    fun updateRule(rid:String, css:String) {
         if(!ruleMap.containsKey(rid)) {
             createRule(rid, css)
         } else {
@@ -130,7 +130,7 @@ class StyleManager(val esheet:Entity) {
         }
     }
 
-    fun createRule(rid:Long, css:String) {
+    fun createRule(rid:String, css:String) {
         val s = sheet
         if(s==null) return
         console.log("CREATE RULE $css")
@@ -143,7 +143,7 @@ class StyleManager(val esheet:Entity) {
     }
 }
 
-val KIStyles : MutableMap<Long,StyleManager> = HashMap()
+val KIStyles : MutableMap<String,StyleManager> = HashMap()
 
 class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     private var sheetsTable : InterestTable? = null
@@ -165,7 +165,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
             stbl.addActions {
                 val al = ActionListRenderer(it)
                 al.addAction(object : ActionComponent(it) {
-                    {
+                    init {
                         root.textContent = "+"
                         addClass("manage")
                     }
@@ -180,7 +180,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                     }
                 })
                 al.addAction(object : ActionComponent(it) {
-                    {
+                    init {
                         addClass("live")
                         root.textContent = "!"
                     }
@@ -193,11 +193,11 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                     }
                 })
                 al.addAction(object : ActionComponent(it) {
-                    {
+                    init {
                         addClass("properties")
                         root.textContent = "@"
                     }
-                    override fun invoke(e: Event) {
+                    override fun invoke(event: Event) {
                         val e = entity
                         if(e==null) return
                         managedProperties!!.focus(e)
@@ -221,7 +221,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                             val eid = that.sheetsTable!!.selected.firstThat { true }!!
                             val tsel = sel.value
                             if(!tsel.trim().isEmpty()) {
-                                ALL.galaxies["CSSStylesheet"]!!.call(eid, "addRule", array(tsel, ""), {})
+                                ALL.galaxies["CSSStylesheet"]!!.call(eid, "addRule", arrayOf(tsel, ""), {})
                             }
                         }
                     }
@@ -252,7 +252,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
             stbl.onSelection {
                 var fs = "id < 0"
                 if(it.iterator().hasNext() )
-                    fs = it.map { "(id = $it)" }.makeString(" or ", "CSSStylesheet.rules <- (", ")")
+                    fs = it.map { "(id = $it)" }.joinToString(" or ", "CSSStylesheet.rules <- (", ")")
 
                 val f = APP!!.filterParser!!.parse<Json>(fs)!!
                 that.rulesTable!!.interest.filterJson(f)
@@ -269,7 +269,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                             val n = iname.value
                             val v = ivalue.value
                             if(!n.isEmpty() && !v.isEmpty()) {
-                                ALL.galaxies["CSSStyleRule"]!!.call(eid, "addProperty", array(n,v), {
+                                ALL.galaxies["CSSStyleRule"]!!.call(eid, "addProperty", arrayOf(n,v), {
                                     console.log("created property: ${JSON.stringify(it)}")
                                 })
                             }
@@ -291,7 +291,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                         val al = ActionListRenderer(that.propertiesTable!!.interest)
 
                         al.addAction(object : ActionComponent(that.propertiesTable!!.interest) {
-                            {addClass("remove"); root.textContent = "-"}
+                            init {addClass("remove"); root.textContent = "-"}
 
                             override fun invoke(e: Event) {
                                 if(entity==null) return
@@ -312,7 +312,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                     stbl.onSelection {
                         var fs = "id < 0"
                         if(it.iterator().hasNext()) {
-                            fs = it.map { "(id = $it)" }.makeString(" or ", "CSSStyleRule.properties <- (", ")")
+                            fs = it.map { "(id = $it)" }.joinToString(" or ", "CSSStyleRule.properties <- (", ")")
                         }
                         console.log(fs)
                         val f = APP!!.filterParser!!.parse<Json>(fs)!!
@@ -331,9 +331,9 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
 
 class PropertyBag(val interest : Interest, val master:InterestTable, id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     val table : InterestTable = InterestTable(interest)
-    val completer : CustomCompleter = CustomCompleter(ALL.galaxies["CSSProperty"]!!, array("name", "role"), "role");
+    val completer : CustomCompleter = CustomCompleter(ALL.galaxies["CSSProperty"]!!, arrayOf("name", "role"), "role");
 
-    {
+    init {
         val that = this
         table.colorder.addAll(listOf("role", "name","value"))
         table.createColumns()
@@ -345,7 +345,7 @@ class PropertyBag(val interest : Interest, val master:InterestTable, id:String=B
             val al = ActionListRenderer(interest)
 
             al.addAction(object : ActionComponent(interest) {
-                {
+                init {
                     addClass("add")
                     root.textContent = "+"
                 }
@@ -376,7 +376,7 @@ class ManagedProperties(val interest:Interest, id:String=BaseComponent.id()) : C
     val tbl = InterestTable(interest);
     val lbl = Label();
 
-    {
+    init {
         this+lbl
         this+tbl
         tbl.colorder.addAll(listOf("name","value"))

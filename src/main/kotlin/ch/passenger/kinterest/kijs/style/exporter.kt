@@ -89,7 +89,7 @@ class CSSExporter() : Component<HTMLDivElement>() {
                     click {
                         val id = sel.selectedValue
                         if(id!=null) {
-                            val sheet = that.gs.get(safeParseInt(id) as Long)
+                            val sheet = that.gs.get(id)
                             if(sheet.state==EntityState.LOADED) {
                                 that.export(sheet)
                             }

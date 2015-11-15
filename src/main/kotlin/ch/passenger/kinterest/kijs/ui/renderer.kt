@@ -13,7 +13,7 @@ import java.util.ArrayList
  * Created by svd on 10/01/2014.
  */
 abstract class EntityRendererEditor<T:HTMLElement>(val interest:Interest, val creator:Boolean=false, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name), CellRendererEditor {
-    private var eid : Long? = null
+    private var eid : String? = null
     var create : Entity? = null
     var entity: Entity?
         get() = if(creator) create else interest.galaxy.heaven[eid]

@@ -37,7 +37,7 @@ import kotlin.browser.document
 class StyleManager(val esheet:Entity) {
     private val gsheet = ALL.galaxies["CSSStylesheet"]!!
     private val grule = ALL.galaxies["CSSStyleRule"]!!
-    private val ruleMap : MutableMap<Long,Int> = HashMap();
+    private val ruleMap : MutableMap<String,Int> = HashMap();
     private var islive = false
     private var sheet : CSSStyleSheet? = null
     private var interest : Interest? = null;
@@ -105,7 +105,7 @@ class StyleManager(val esheet:Entity) {
             console.error("error")
             console.error(js)
         }
-        val la = js.get("result") as Array<Long>
+        val la = js.get("result") as Array<String>
         la.forEach {
             val rid = it
             grule.call(rid, "getCSS", arrayOf(), {
@@ -116,7 +116,7 @@ class StyleManager(val esheet:Entity) {
         }
     }
 
-    fun updateRule(rid:Long, css:String) {
+    fun updateRule(rid:String, css:String) {
         if(!ruleMap.containsKey(rid)) {
             createRule(rid, css)
         } else {
@@ -130,7 +130,7 @@ class StyleManager(val esheet:Entity) {
         }
     }
 
-    fun createRule(rid:Long, css:String) {
+    fun createRule(rid:String, css:String) {
         val s = sheet
         if(s==null) return
         console.log("CREATE RULE $css")
@@ -143,7 +143,7 @@ class StyleManager(val esheet:Entity) {
     }
 }
 
-val KIStyles : MutableMap<Long,StyleManager> = HashMap()
+val KIStyles : MutableMap<String,StyleManager> = HashMap()
 
 class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>(id) {
     private var sheetsTable : InterestTable? = null
@@ -197,7 +197,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                         addClass("properties")
                         root.textContent = "@"
                     }
-                    override fun invoke(e: Event) {
+                    override fun invoke(event: Event) {
                         val e = entity
                         if(e==null) return
                         managedProperties!!.focus(e)

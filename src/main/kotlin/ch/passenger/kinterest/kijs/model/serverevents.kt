@@ -16,15 +16,15 @@ public interface ServerInterestEvent : ServerEntityEvent {
 }
 
 public interface ServerInterestOrderEvent : ServerInterestEvent {
-    val order : Array<Long>
+    val order : Array<String>
 }
 
 public interface ServerInterestAddEvent : ServerInterestEvent {
-    val id : Long
+    val id : String
 }
 
 public interface ServerInterestRemoveEvent : ServerInterestEvent {
-    val id : Long
+    val id : String
 }
 
 public interface ServerInterestConfigEvent : ServerInterestEvent {
@@ -37,13 +37,13 @@ public interface ServerInterestConfigEvent : ServerInterestEvent {
 
 public interface ServerEntityUpdateEvent : ServerEntityEvent {
     val property : String
-    val id:Long
+    val id:String
     val value:Any?
     val old:Any?
 }
 
 public interface JsonEntity {
     val entity : String
-    val id : Long
+    val id : String
     val values : Json
 }

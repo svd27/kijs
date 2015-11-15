@@ -20,9 +20,9 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
     var tableBody: TableBody? = null
     val columns: MutableMap<String, InterestTableColumn> = HashMap()
     val colorder: MutableList<String> = ArrayList()
-    private val selection : MutableSet<Long> = HashSet()
-    public  val selected : Set<Long> get() = selection
-    val selector : Subject<Iterable<Long>> = Subject()
+    private val selection : MutableSet<String> = HashSet()
+    public  val selected : Set<String> get() = selection
+    val selector : Subject<Iterable<String>> = Subject()
     var offset : Int = interest.offset
     var committer : Boolean = false
       set(v) {
@@ -52,8 +52,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         columns[col]?.headerRenderer?.label = label
     }
 
-    fun onSelection(cb:(Iterable<Long>)->Unit) : Disposable = selector.subscribe(cb)
-    fun setSelection(sel:Iterable<Long>) {
+    fun onSelection(cb:(Iterable<String>)->Unit) : Disposable = selector.subscribe(cb)
+    fun setSelection(sel:Iterable<String>) {
         val nsel = setOf(sel)
         if(nsel.same(selection)) return
         selection.clear()
@@ -62,7 +62,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         tableBody?.rows?.forEach {
             val de = it.data("entity")
             if(de !=null) {
-                val aid = safeParseInt(de) as Long
+                val aid = de
                 if(sel.any { it==aid }) it.addClass("selected")
                 else it.removeClass("selected")
             } else it.removeClass("selected")
@@ -114,7 +114,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                         val tr = this
                                         data("order", "$idx")
                                         on("click") {
-                                            val oldsel = HashSet<Long>()
+                                            val oldsel = HashSet<String>()
                                             oldsel.addAll(that.selection)
                                             val e = it as MouseEvent
                                             val ord = tr.data("order")

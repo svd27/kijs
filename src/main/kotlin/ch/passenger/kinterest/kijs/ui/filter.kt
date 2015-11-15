@@ -72,8 +72,8 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
     var interest: Interest? = null
     val input: TextInput = TextInput();
     val list: Div = Div()
-    val candidates : MutableList<Long> = ArrayList()
-    var selected : Long? = null
+    val candidates : MutableList<String> = ArrayList()
+    var selected : String? = null
     val subject : Subject<Entity?> = Subject()
     var silent : Boolean = false
       set(v) {

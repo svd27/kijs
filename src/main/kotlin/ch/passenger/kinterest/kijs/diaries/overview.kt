@@ -1,7 +1,6 @@
 package ch.passenger.kinterest.kijs.diaries
 
 import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.mapOf
 import ch.passenger.kinterest.kijs.model.*
 import ch.passenger.kinterest.kijs.ui.*
 import org.w3c.dom.HTMLDivElement
@@ -149,7 +148,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
 
                 that.buddies!!.colorder.addAll(listOf("nick", "email", "birthdate", "state"))
                 that.buddies!!.createColumns()
-                that.labels.keySet().forEach {
+                that.labels.keys.forEach {
                     that.table?.label(it, that.labels[it]!!)
                 }
                 d + that.focusHeader
@@ -334,8 +333,7 @@ class EntryEditor(interest: Interest, id: String = BaseComponent.id()) : EntityE
 class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
     var diaries: Boolean = false
     var entries: Boolean = false
-    val lastOwners: MutableList<Long> = ArrayList()
-    val lastDiaries: MutableList<Long> = ArrayList()
+    val lastDiaries: MutableList<String> = ArrayList()
     override fun initialise(n: HTMLDivElement) {
         val d = this
         val ownerView = OwnerView()

@@ -101,7 +101,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                             val event = it
                             if (rows.size() > it.order.size) {
                                 console.log("order sz: ${it.order.size} < ${rows.size()} removing: ${it.order.size}..${(rows.size() - 1)}")
-                                for (i in (rows.size() - 1) to it.order.size) {
+                                for (i in  it.order.size .. (rows.size - 1)) {
                                     //console.log("dead wood $i")
                                     body.remove(i)
                                 }

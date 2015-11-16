@@ -36,10 +36,7 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             that.table?.colorder?.clear()
             that.table!!.colorder.addAll(that.cols)
             that.table!!.createColumns()
-            that.labels.keys.forEach {
-                lbl ->
-                that.table?.label(lbl, that.labels[it]!!)
-            }
+            that.labels.forEach { entry -> that.table?.label(entry.key as String, entry.value as String) }
 
             that.table?.addActions {
                 val r = ActionListRenderer(it)
@@ -314,15 +311,14 @@ class EntryEditor(interest: Interest, id: String = BaseComponent.id()) : EntityE
 
     fun select(e: Entity?) {
         if (e != null) console.log("$id Content: ${e["content"]}")
-        entity = e
-        if (entity?.id == e?.id)
-            update()
+        this.entity = e
+        update()
     }
 
 
     override fun update() {
-        console.log("Entry UPDATE")
-        tae.entity = entity
+        console.log("Entry UPDATE $entity")
+        tae.entity = this.entity
         cr.entity = entity
 
         tae.update()

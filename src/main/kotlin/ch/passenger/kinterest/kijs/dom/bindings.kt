@@ -45,12 +45,14 @@ interface  Output {
     fun contains(token: String): Boolean
 }
 
+/*
 public @native val Element.classList: DOMTokenList get() = noImpl
 public @native val Element.dataset: MutableMap<String, String> get() = noImpl
 public @native fun Element.setAttribute(name: String, value: String): Unit = noImpl
 public @native fun Element.getAttribute(name: String): String = noImpl
 public @native fun Element.removeAttribute(name: String): String = noImpl
 public @native fun HTMLElement.focus(): Unit = noImpl
+*/
 
 public @native fun KIDATAset(e: HTMLElement, name: String, value: String): Unit = noImpl
 public @native fun KIDATAget(e: HTMLElement, name: String): String = noImpl
@@ -80,8 +82,10 @@ fun HTMLCollection.forEach(cb:HTMLCollection.(Element)->Unit) {
     for(i in 0..length-1) cb(get(i)!!)
 }
 
+/*
 fun StyleSheet.deleteRule(idx:Int) : Unit = noImpl
 fun StyleSheet.insertRule(css:String,idx:Int) : Int = noImpl
+*/
 
 fun CSSRuleList.forEach(cb:(CSSRule)->Unit) {
     for(i in 0..length-1) cb(item(i)!!)

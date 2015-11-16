@@ -180,7 +180,7 @@ class Diaries(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id) {
             that.table?.colorder?.clear()
             that.table!!.colorder.addAll(that.cols)
             that.table!!.createColumns()
-            that.labels.keySet().forEach {
+            that.labels.keys.forEach {
                 that.table?.label(it, that.labels[it]!!)
             }
             that.table?.committer = true
@@ -256,7 +256,7 @@ class EntryPane(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
             that.table?.colorder?.clear()
             that.table!!.colorder.addAll(that.cols)
             that.table!!.createColumns()
-            that.labels.keySet().forEach {
+            that.labels.keys.forEach {
                 that.table?.label(it, that.labels[it]!!)
             }
             that.table?.committer = true
@@ -349,7 +349,7 @@ class OverviewPanel(id: String = BaseComponent.id()) : Component<HTMLDivElement>
                         diaries.table!!.onSelection {
                             val sel = it
                             console.log("selected diary $sel")
-                            val chg = d.lastDiaries.size()==0 || d.lastDiaries.any { !sel.contains(it) } || sel.any { !d.lastDiaries.contains(it) }
+                            val chg = d.lastDiaries.size==0 || d.lastDiaries.any { !sel.contains(it) } || sel.any { !d.lastDiaries.contains(it) }
                             console.log("chg: $chg")
                             if (chg) {
                                 d.lastDiaries.clear()

@@ -132,8 +132,8 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
         }
         return false
     }
-    public val hasConflict : Boolean get() = descriptor.properties.keySet().any { conflicted(it) }
-    public fun revert() {wroteOn.clear(); written.clear(); descriptor.properties.values().forEach {
+    public val hasConflict : Boolean get() = descriptor.properties.keys.any { conflicted(it) }
+    public fun revert() {wroteOn.clear(); written.clear(); descriptor.properties.values.forEach {
         ALL.galaxies[descriptor.entity]?.updated(this, it.property, values[it.property])
         updateHook(this)
     }}
@@ -187,8 +187,8 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 
     fun hasProperty(p:String) : Boolean = descriptor.properties.containsKey(p)
 
-    public override fun equals(o:Any?) : Boolean {
-        if(o is Entity) return o.id == id
+    public override fun equals(other:Any?) : Boolean {
+        if(other is Entity) return other.id == id
         return false
     }
 
@@ -197,7 +197,7 @@ public open class Entity(public val descriptor : EntityDescriptor, public val id
 
 public open class EntityTemplate(descriptor:EntityDescriptor) : Entity(descriptor, "") {
     override val dirty: Boolean get() {
-        return descriptor.properties.values().all {
+        return descriptor.properties.values.all {
             (!it.readonly && it.nullable) || (it.oneToMany)
             || ((it.readonly || !it.nullable) &&  written.containsKey(it.property))
 
@@ -247,7 +247,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
 
     fun retrieved(entities:Iterable<Entity>) {
         entities.forEach { heaven[it.id] = it; retrieving.remove(it) }
-        interests.values().forEach { it.retrieved(entities) }
+        interests.values.forEach { it.retrieved(entities) }
     }
 
     fun create(name:String, cb:(Interest)->Unit) {

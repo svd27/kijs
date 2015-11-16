@@ -193,8 +193,11 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
 abstract class EntityEditor<T:HTMLElement>(val interest:Interest, id:String=BaseComponent.id(), name:String="div") : Component<T>(id, name) {
     private var eid : String = ""
     var entity : Entity?
-      get() = if(eid.isNotEmpty()) interest.entity(eid) else null
-      set(v) {if(v?.id!=eid) {eid=v?.id?:""; update()} }
+      get() = if(!eid.isEmpty()) interest.entity(eid) else null
+      set(v) {
+          if(v!=null) {eid = v.id} else eid = ""
+          update()
+      }
 
     init {
         disposables.add(interest.on {

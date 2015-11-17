@@ -138,7 +138,10 @@ class CSSExporter() : Component<HTMLDivElement>() {
                             checkbox {}
                         }
                         td {
-                            textContent = rule.cssText
+                            if(rule.`type` == 1.toShort()) {
+                                val style = rule as CSSStyleRule
+                                textContent = style.selectorText
+                            } else rule.cssText
                         }
                         td {
                             if(rule.`type` == 1.toShort()) {

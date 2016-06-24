@@ -217,7 +217,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                 anchor {
                     textContent = "Add"
                     click {
-                        if(that.sheetsTable!!.selected.size()>0) {
+                        if(that.sheetsTable!!.selected.size>0) {
                             val eid = that.sheetsTable!!.selected.firstThat { true }!!
                             val tsel = sel.value
                             if(!tsel.trim().isEmpty()) {
@@ -296,7 +296,7 @@ class StyleManagerView(id:String=BaseComponent.id()) : Component<HTMLDivElement>
                             override fun invoke(e: Event) {
                                 if(entity==null) return
                                 val rt = that.rulesTable!!
-                                if(rt.selected.size()!=1) return
+                                if(rt.selected.size!=1) return
                                 val rule = that.rulesTable?.selected?.firstThat { true }
                                 if(rule!=null) {
                                     val r = rt.interest.entity(rule)
@@ -354,7 +354,7 @@ class PropertyBag(val interest : Interest, val master:InterestTable, id:String=B
                     val  m = that.master
                     val e = entity
                     val sel = m.selected
-                    if(e!=null && sel.size()>0) {
+                    if(e!=null && sel.size>0) {
                         sel.forEach {
                             val rule = m.interest.entity(it)
                             m.interest.galaxy.addRelation(rule, "properties", e.id)

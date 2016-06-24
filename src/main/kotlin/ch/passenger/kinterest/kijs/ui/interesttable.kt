@@ -70,7 +70,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
         selector.onNext(selection)
     }
 
-    fun reduce(cols: Set<String>) = columns.keySet().filter { it !in cols }.forEach { columns.remove(it) }
+    fun reduce(cols: Set<String>) = columns.keys.filter { it !in cols }.forEach { columns.remove(it) }
 
     override fun initialise(n: HTMLDivElement) {
         val root = this
@@ -80,7 +80,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                 tr {
                     val tr = this
                     if (that.colorder.isEmpty()) {
-                        that.columns.keySet().forEach { that.colorder.add(it) }
+                        that.columns.keys.forEach { that.colorder.add(it) }
                     }
                     that.colorder.map { that.columns[it] }.notNulls().forEach {
                         val col = it
@@ -99,8 +99,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                     when(it) {
                         is InterestOrderEvent -> {
                             val event = it
-                            if (rows.size() > it.order.size) {
-                                console.log("order sz: ${it.order.size} < ${rows.size()} removing: ${it.order.size}..${(rows.size() - 1)}")
+                            if (rows.size > it.order.size) {
+                                console.log("order sz: ${it.order.size} < ${rows.size} removing: ${it.order.size}..${(rows.size - 1)}")
                                 for (i in  it.order.size .. (rows.size - 1)) {
                                     //console.log("dead wood $i")
                                     body.remove(i)
@@ -108,7 +108,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                             }
                             //console.log("IT ORDER SIZE: ${it.order.size} ROWS: ${rows.size()}")
                             for (idx in 0..(it.order.size - 1)) {
-                                if (rows.size() <= idx) {
+                                if (rows.size <= idx) {
                                     body.tr {
                                         //console.log("CREATE ROW $idx ${rows.size()}")
                                         val tr = this
@@ -126,14 +126,14 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                                                     body.rows.forEach {
                                                         it.removeClass("selected")
                                                     }
-                                                    if(sel!=null && sel>=0 && sel<that.interest.order.size()) {
+                                                    if(sel!=null && sel>=0 && sel<that.interest.order.size) {
                                                         tr.addClass("selected")
                                                         that.selection.add(that.interest.order[sel])
                                                     }
                                                 } else if(e.metaKey) {
-                                                    if(sel!=null && sel>=0 && sel<that.interest.order.size()) {
+                                                    if(sel!=null && sel>=0 && sel<that.interest.order.size) {
                                                         val id = that.interest.order[sel]
-                                                        if(that.selection.size()>1 && that.selection.contains(id)) {
+                                                        if(that.selection.size>1 && that.selection.contains(id)) {
                                                             that.selection.remove(id)
                                                             tr.removeClass("selected")
                                                         } else {
@@ -163,8 +163,8 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                             }
                             for (row in body.rows) {
                                 val idx = parseInt(row.data("order")!!)
-                                if (idx >= event.interest.order.size()) {
-                                    console.warn("$idx >= ${event.interest.order.size()}")
+                                if (idx >= event.interest.order.size) {
+                                    console.warn("$idx >= ${event.interest.order.size}")
                                 } else {
                                     val entity = event.interest[idx]
                                     row.data("entity", "${entity?.id}")
@@ -185,7 +185,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                         is InterestLoadEvent -> {
                             val event = it as InterestLoadEvent
                             val idx = it.idx
-                            if(body.rows.size()>idx) {
+                            if(body.rows.size>idx) {
                             val row = body.rows[idx]
                             row.cells.forEach {
                                 val cr = it.renderer
@@ -200,7 +200,7 @@ class InterestTable(val interest: Interest, id: String = BaseComponent.id()) : C
                         is InterestUpdateEvent -> {
                             //console.log("UPDATE...")
                             //console.log(it)
-                            if (it.idx<rows.size()) {
+                            if (it.idx<rows.size) {
                                 val row = rows[it.idx]
                                 if (it.entity.dirty) row.addClass("dirty") else row.removeClass("dirty")
                                 val e = it as InterestUpdateEvent

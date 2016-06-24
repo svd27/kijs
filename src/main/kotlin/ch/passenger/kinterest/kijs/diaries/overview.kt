@@ -51,7 +51,9 @@ class OwnerView(id: String = BaseComponent.id()) : Component<HTMLDivElement>(id)
                     override fun invoke(e: Event) {
                         console.log("invoke detail")
                         console.log(that.detail?:"???")
-                        that.detail?.entity = entity
+                        entity?.let {
+                            that.detail?.entity = it
+                        }
                         that.detail?.show()
                     }
                 })

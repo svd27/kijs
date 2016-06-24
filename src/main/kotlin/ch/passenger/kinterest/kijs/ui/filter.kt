@@ -133,31 +133,31 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
                 }
             }
             val kd = input.on("keydown")
-            kd.where { console.log(it); val ke = it as KeyboardEvent; console.log(ke.keyCode); ke.keyCode in listOf(13, 38,40) }.subscribe {
+            kd.where { console.log(it); val ke = it as KeyboardEvent; console.log(ke.keyCode); ke.keyCode in listOf(13L, 38L,40L) }.subscribe {
                 val ke = it as KeyboardEvent
 
-                if (ke.keyCode in listOf(13)) {
+                if (ke.keyCode in listOf(13L)) {
                     if(that.selected!=null) {
                        that.select()
                     }
                 } else {
                     var idx = -1
                     if (that.selected!=null) {
-                        for(i in 0..(that.candidates.size()-1)) {
+                        for(i in 0..(that.candidates.size-1)) {
                             if(that.candidates[i]==that.selected) idx = i
                         }
                     }
                     console.log("indexof: $idx kc: ${ke.keyCode}")
                     if(idx<0) idx = 0
                     else if(ke.keyCode==(38 as Long)) {
-                        if(idx==0) idx=that.candidates.size()-1
+                        if(idx==0) idx=that.candidates.size-1
                         else idx=idx-1
                     } else if(ke.keyCode==(40 as Long)) {
-                        if(idx+1>=that.candidates.size()) idx = 0
+                        if(idx+1>=that.candidates.size) idx = 0
                         else idx=idx+1
                     }
                     console.log("selected idx $idx")
-                    if(idx>=0 && idx<that.candidates.size()) that.selected = that.candidates[idx]
+                    if(idx>=0 && idx<that.candidates.size) that.selected = that.candidates[idx]
                     console.log(that.selected?:"")
                     that.list.root.childNodes.forEach {
                         val o = KIDATAget(it as HTMLElement, "entity")
@@ -198,7 +198,7 @@ class CustomCompleter(val galaxy: Galaxy, val projections: Array<String>, val la
                         it.order.forEach { that.candidates.add(it) }
                         console.log(that.candidates)
                         that.list.removeChildren()
-                        for(i in 0..(that.candidates.size()-1)) {
+                        for(i in 0..(that.candidates.size-1)) {
                             that.list.span {
                                 console.log("ADDING $i")
                                 console.log(this)

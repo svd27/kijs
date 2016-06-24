@@ -477,16 +477,16 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
     override fun editor() : Tag<out HTMLElement> = adiv
 
     fun createProjections(): Array<String> {
-        val pit = targetGalaxy.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
+        val pit = targetGalaxy.descriptor.properties.values.filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
         val c = pit.count()
         val ait = pit.iterator()
         return Array<String>(c) { ait.next() }
     }
 
     fun findLabel(): String {
-        var lbl = targetGalaxy.descriptor.properties.values().firstThat { it.label }?.property
+        var lbl = targetGalaxy.descriptor.properties.values.firstThat { it.label }?.property
         if(lbl==null) {
-            lbl = targetGalaxy.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
+            lbl = targetGalaxy.descriptor.properties.values.firstThat { it.datatype.endsWith("String") && it.unique }?.property
         }
         if(lbl==null) lbl = "id"
         return lbl!!
@@ -496,7 +496,7 @@ class CompleterRenderEdit(property: String, interest: Interest, creator: Boolean
     val label : String
 
     init {
-        label = targetGalaxy.descriptor.properties.values().firstThat { it.label }?.property?:"";
+        label = targetGalaxy.descriptor.properties.values.firstThat { it.label }?.property?:"";
         console.log("label $label")
     }
 
@@ -594,7 +594,7 @@ class HeaderRenderer(val interest: Interest, val property: String, var label: St
                     d.removeClass(cna)
                     d.removeClass(cnd)
                     if (sk != null) {
-                        d.addClass("sort" + sk.direction.name().toLowerCase())
+                        d.addClass("sort" + sk.direction.name.toLowerCase())
                     }
                 }
             }

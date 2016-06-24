@@ -246,7 +246,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
     }
 
     fun retrieved(entities:Iterable<Entity>) {
-        entities.forEach { heaven[it.id] = it; retrieving.remove(it) }
+        entities.forEach { heaven[it.id] = it; retrieving.remove(it.id) }
         interests.values.forEach { it.retrieved(entities) }
     }
 
@@ -321,7 +321,7 @@ public class Galaxy(public val descriptor : EntityDescriptor) {
                     else ALL.galaxies[pd.entity]!!.relationRemoved(e, ue.property, ue.old.toString())
                 } else {
                     e.update(ue)
-                    interests.values().forEach {
+                    interests.values.forEach {
                         it.updated(e, ue.property, ue.old)
                     }
                 }
@@ -426,7 +426,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
             val k = keys[it]
             val j = JSON.parse<Json>("{}")
             j.set("property", k.property)
-            j.set("direction", k.direction.name())
+            j.set("direction", k.direction.name)
             j
         }
 
@@ -471,7 +471,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
         plus(e.id)
     }
 
-    fun plus(aid:String) {
+    operator fun plus(aid:String) {
         val req = Ajax("${APP!!.HTTP}${APP!!.base}/${galaxy.descriptor.entity}/$id/add/${aid}", "GET")
         req.start()
         if(eager) {
@@ -489,7 +489,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
         req.start()
     }
 
-    fun get(idx:Int) : Entity? {
+    operator fun get(idx:Int) : Entity? {
         val eid = order[idx]
         if(eid !in galaxy && !eager) galaxy.retrieve(listOf(eid))
         return galaxy[eid]
@@ -498,7 +498,7 @@ public class Interest(val id:Int, val name:String, val galaxy:Galaxy, private va
     fun entity(eid:String) = galaxy[eid]
 
     fun onOrder(nwo:Array<String>) {
-        val ol = Array<String>(order.size()) {order[it]}
+        val ol = Array<String>(order.size) {order[it]}
 
         order.clear()
         //subject.onNext(InterestRemoveEvent(this, ol));

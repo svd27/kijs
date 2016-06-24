@@ -1,41 +1,14 @@
 package ch.passenger.kinterest.kijs.ui
 
-import ch.passenger.kinterest.kijs.model.Universe
-import ch.passenger.kinterest.kijs.dom.*
-import org.w3c.dom.HTMLDivElement
-import org.w3c.dom.Element
-import kotlin.browser.document
-import ch.passenger.kinterest.kijs.forEach
-import rx.js.Disposable
-import java.util.HashSet
-import ch.passenger.kinterest.kijs.model.Interest
-import org.w3c.dom.HTMLElement
-import ch.passenger.kinterest.kijs.model.Entity
-import ch.passenger.kinterest.kijs.model.PropertyDescriptor
-import ch.passenger.kinterest.kijs.model.EntityDescriptor
-import java.util.HashMap
-import ch.passenger.kinterest.kijs.model.InterestUpdateEvent
-import ch.passenger.kinterest.kijs.model.InterestOrderEvent
 import ch.passenger.kinterest.kijs.APP
-import ch.passenger.kinterest.kijs.filter
-import ch.passenger.kinterest.kijs.indexOf
-import ch.passenger.kinterest.kijs.none
-import ch.passenger.kinterest.kijs.model.InterestLoadEvent
-import ch.passenger.kinterest.kijs.model.PropertyFilter
-import java.util.ArrayList
-import rx.js.Subject
-import ch.passenger.kinterest.kijs.map
-import ch.passenger.kinterest.kijs.notNulls
-import moments.Moment
-import ch.passenger.kinterest.kijs.model.InterestConfigEvent
-import ch.passenger.kinterest.kijs.model.SortKey
-import ch.passenger.kinterest.kijs.model.SortDirection
-import ch.passenger.kinterest.kijs.any
+import ch.passenger.kinterest.kijs.dom.Ajax
 import ch.passenger.kinterest.kijs.firstThat
-import org.w3c.dom.events.MouseEvent
-
-import kotlin.js.dom.html.HTMLSelectElement
-import ch.passenger.kinterest.kijs.model.EntityTemplate
+import ch.passenger.kinterest.kijs.model.*
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLElement
+import rx.js.Disposable
+import java.util.*
+import kotlin.browser.document
 
 /**
  * Created by svd on 08/01/2014.
@@ -65,7 +38,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                 ax.start()
             }
         }
-        universe.galaxies.values().forEach {
+        universe.galaxies.values.forEach {
             val g = it
 
             div.div {
@@ -91,11 +64,11 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
                                     +"${ai.id}--${ai.name}"
                                     plus(tbl)
                                     if(ai.galaxy.descriptor.entity=="DiaryOwner") {
-                                        val pit = ai.galaxy.descriptor.properties.values().filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
+                                        val pit = ai.galaxy.descriptor.properties.values.filter { !it.nullable && it.datatype.endsWith("String") }.map { it.property }
                                         val c = pit.count()
                                         val ait = pit.iterator()
                                         val pa = Array<String>(c) {ait.next()}
-                                        val lbl = ai.galaxy.descriptor.properties.values().firstThat { it.datatype.endsWith("String") && it.unique }?.property
+                                        val lbl = ai.galaxy.descriptor.properties.values.firstThat { it.datatype.endsWith("String") && it.unique }?.property
                                         val cc = CustomCompleter(ai.galaxy, pa, lbl?:"id")
                                         cc.on {
                                             console.log("COMPLETED")
@@ -179,7 +152,7 @@ class UniverseMenu(val universe: Universe, id: String = BaseComponent.id()) : Co
     fun crtTable(ai:Interest) : InterestTable {
         val tbl = InterestTable(ai)
 
-        ai.galaxy.descriptor.properties.values().forEach {
+        ai.galaxy.descriptor.properties.values.forEach {
             tbl.columns[it.property] = InterestTableColumn(it.property, ai)
         }
         val cc = InterestTableColumn("commit", ai, { CommitRenderer(ai) })
@@ -218,7 +191,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
             if(field.id!=v.id) {
                 field = v
                 if(creator) {
-                    v.descriptor.properties.values().forEach {
+                    v.descriptor.properties.values.forEach {
                         if(it.floaty && v[it.property]==null) {
                             v[it.property] = 0.0
                         }
@@ -246,7 +219,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
         if(e is EntityTemplate && creator) e.updateHook = {update(it)}
         if(creator) {
             val v = e
-            e.descriptor.properties.values().forEach {
+            e.descriptor.properties.values.forEach {
                 if(it.floaty && v[it.property]==null) {
                     v[it.property] = 0.0
                 }
@@ -290,7 +263,7 @@ open class GenericEntityEditor(val interest:Interest, val creator:Boolean=false,
         d.div {
             that.body=this
             that.body?.addClass("body")
-            that.interest.galaxy.descriptor.properties.values().forEach {
+            that.interest.galaxy.descriptor.properties.values.forEach {
                 val pd = it;
                 that.body?.dl {
                 dt { +pd.property }

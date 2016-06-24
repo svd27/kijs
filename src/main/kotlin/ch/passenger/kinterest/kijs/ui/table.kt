@@ -55,8 +55,8 @@ open class TableBody(id:String=BaseComponent.id()) : Tag<HTMLTableSectionElement
     }
 
     fun remove(idx:Int): TableRow? {
-        if(idx>=rows.size()) {
-            console.warn("row remove: $idx>=${rows.size()}")
+        if(idx>=rows.size) {
+            console.warn("row remove: $idx>=${rows.size}")
             return null
         }
         val c = rows[idx]
@@ -85,7 +85,7 @@ open class TableRow(id:String=BaseComponent.id()) : Tag<HTMLTableRowElement>("tr
     }
 
     fun remove(idx:Int) {
-        val c = cells.remove(idx)
+        val c = cells.removeAt(idx)
         c.remove()
         c.dispose()
     }
